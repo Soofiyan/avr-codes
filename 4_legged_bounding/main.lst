@@ -1,0 +1,463 @@
+   1               		.file	"main.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__RAMPZ__ = 0x3b
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.text
+   9               	.Ltext0:
+  10               		.cfi_sections	.debug_frame
+  11               	.global	bluetooth_init
+  13               	bluetooth_init:
+  14               	.LFB11:
+  15               		.file 1 "main.c"
+   1:main.c        **** #define F_CPU 14745600UL
+   2:main.c        **** #define BAUD 9600
+   3:main.c        **** #define BAUDRATE ((F_CPU/(BAUD*16UL)-1))
+   4:main.c        **** 
+   5:main.c        **** #include "avr_compiler.h"
+   6:main.c        **** 
+   7:main.c        **** bool actuate_out = 0,actuate_in = 0,start = 0;
+   8:main.c        **** uint8_t RX_raw,butt[16],RX_ad[4],RX_ad1,RX[4];
+   9:main.c        **** float result;
+  10:main.c        **** 
+  11:main.c        **** 
+  12:main.c        **** void bluetooth_init(void)
+  13:main.c        **** {
+  16               		.loc 1 13 1 view -0
+  17               		.cfi_startproc
+  18               	/* prologue: function */
+  19               	/* frame size = 0 */
+  20               	/* stack size = 0 */
+  21               	.L__stack_usage = 0
+  14:main.c        ****     DDRH |= (1<<PH2);
+  22               		.loc 1 14 5 view .LVU1
+  23               		.loc 1 14 10 is_stmt 0 view .LVU2
+  24 0000 E1E0      		ldi r30,lo8(1)
+  25 0002 F1E0      		ldi r31,lo8(1)
+  26 0004 8081      		ld r24,Z
+  27 0006 8460      		ori r24,lo8(4)
+  28 0008 8083      		st Z,r24
+  15:main.c        ****     PORTH |= (1<<PH2);//bluetooth
+  29               		.loc 1 15 5 is_stmt 1 view .LVU3
+  30               		.loc 1 15 11 is_stmt 0 view .LVU4
+  31 000a E2E0      		ldi r30,lo8(2)
+  32 000c F1E0      		ldi r31,lo8(1)
+  33 000e 8081      		ld r24,Z
+  34 0010 8460      		ori r24,lo8(4)
+  35 0012 8083      		st Z,r24
+  36               	/* epilogue start */
+  16:main.c        **** }
+  37               		.loc 1 16 1 view .LVU5
+  38 0014 0895      		ret
+  39               		.cfi_endproc
+  40               	.LFE11:
+  42               	.global	usart_init
+  44               	usart_init:
+  45               	.LFB12:
+  17:main.c        **** 
+  18:main.c        **** void usart_init(void)
+  19:main.c        **** {
+  46               		.loc 1 19 1 is_stmt 1 view -0
+  47               		.cfi_startproc
+  48               	/* prologue: function */
+  49               	/* frame size = 0 */
+  50               	/* stack size = 0 */
+  51               	.L__stack_usage = 0
+  20:main.c        ****     UBRR2H=BAUDRATE>>8;
+  52               		.loc 1 20 5 view .LVU7
+  53               		.loc 1 20 11 is_stmt 0 view .LVU8
+  54 0016 1092 D500 		sts 213,__zero_reg__
+  21:main.c        ****     UBRR2L=BAUDRATE;
+  55               		.loc 1 21 5 is_stmt 1 view .LVU9
+  56               		.loc 1 21 11 is_stmt 0 view .LVU10
+  57 001a 8FE5      		ldi r24,lo8(95)
+  58 001c 8093 D400 		sts 212,r24
+  22:main.c        ****     UCSR2B=0b10011000;//enable RXEN TXEN
+  59               		.loc 1 22 5 is_stmt 1 view .LVU11
+  60               		.loc 1 22 11 is_stmt 0 view .LVU12
+  61 0020 88E9      		ldi r24,lo8(-104)
+  62 0022 8093 D100 		sts 209,r24
+  23:main.c        ****     UCSR2C=0b00000110;// UCSZ1 UCSZ0
+  63               		.loc 1 23 5 is_stmt 1 view .LVU13
+  64               		.loc 1 23 11 is_stmt 0 view .LVU14
+  65 0026 86E0      		ldi r24,lo8(6)
+  66 0028 8093 D200 		sts 210,r24
+  67               	/* epilogue start */
+  24:main.c        **** }
+  68               		.loc 1 24 1 view .LVU15
+  69 002c 0895      		ret
+  70               		.cfi_endproc
+  71               	.LFE12:
+  73               	.global	ps2_values
+  75               	ps2_values:
+  76               	.LFB13:
+  25:main.c        **** 
+  26:main.c        **** void ps2_values(void)
+  27:main.c        **** {
+  77               		.loc 1 27 1 is_stmt 1 view -0
+  78               		.cfi_startproc
+  79               	/* prologue: function */
+  80               	/* frame size = 0 */
+  81               	/* stack size = 0 */
+  82               	.L__stack_usage = 0
+  28:main.c        ****     if (butt[10]==1)//up
+  83               		.loc 1 28 5 view .LVU17
+  84               		.loc 1 28 8 is_stmt 0 view .LVU18
+  85 002e 8091 0000 		lds r24,butt+10
+  86 0032 8130      		cpi r24,lo8(1)
+  87 0034 01F4      		brne .L4
+  29:main.c        ****     {
+  30:main.c        ****         butt[10] = 0;
+  88               		.loc 1 30 9 is_stmt 1 view .LVU19
+  89               		.loc 1 30 18 is_stmt 0 view .LVU20
+  90 0036 1092 0000 		sts butt+10,__zero_reg__
+  91               	.L4:
+  31:main.c        ****     }
+  32:main.c        ****     if (butt[11]==1)//left
+  92               		.loc 1 32 5 is_stmt 1 view .LVU21
+  93               		.loc 1 32 8 is_stmt 0 view .LVU22
+  94 003a 8091 0000 		lds r24,butt+11
+  95 003e 8130      		cpi r24,lo8(1)
+  96 0040 01F4      		brne .L5
+  33:main.c        ****     {
+  34:main.c        ****         butt[11] = 0;
+  97               		.loc 1 34 9 is_stmt 1 view .LVU23
+  98               		.loc 1 34 18 is_stmt 0 view .LVU24
+  99 0042 1092 0000 		sts butt+11,__zero_reg__
+ 100               	.L5:
+  35:main.c        ****     }
+  36:main.c        ****     if (butt[12]==1)//down
+ 101               		.loc 1 36 5 is_stmt 1 view .LVU25
+ 102               		.loc 1 36 8 is_stmt 0 view .LVU26
+ 103 0046 8091 0000 		lds r24,butt+12
+ 104 004a 8130      		cpi r24,lo8(1)
+ 105 004c 01F4      		brne .L6
+  37:main.c        ****     {
+  38:main.c        ****         butt[12] = 0;
+ 106               		.loc 1 38 9 is_stmt 1 view .LVU27
+ 107               		.loc 1 38 18 is_stmt 0 view .LVU28
+ 108 004e 1092 0000 		sts butt+12,__zero_reg__
+ 109               	.L6:
+  39:main.c        ****     }
+  40:main.c        ****     if (butt[13]==1)//right
+ 110               		.loc 1 40 5 is_stmt 1 view .LVU29
+ 111               		.loc 1 40 8 is_stmt 0 view .LVU30
+ 112 0052 8091 0000 		lds r24,butt+13
+ 113 0056 8130      		cpi r24,lo8(1)
+ 114 0058 01F4      		brne .L7
+  41:main.c        ****     {
+  42:main.c        ****         butt[13] = 0;
+ 115               		.loc 1 42 9 is_stmt 1 view .LVU31
+ 116               		.loc 1 42 18 is_stmt 0 view .LVU32
+ 117 005a 1092 0000 		sts butt+13,__zero_reg__
+ 118               	.L7:
+  43:main.c        ****     }
+  44:main.c        ****     if (butt[14]==1)//start
+ 119               		.loc 1 44 5 is_stmt 1 view .LVU33
+ 120               		.loc 1 44 8 is_stmt 0 view .LVU34
+ 121 005e 9091 0000 		lds r25,butt+14
+ 122 0062 9130      		cpi r25,lo8(1)
+ 123 0064 01F4      		brne .L3
+  45:main.c        ****     {
+  46:main.c        ****         start ^= 1;
+ 124               		.loc 1 46 9 is_stmt 1 view .LVU35
+ 125               		.loc 1 46 15 is_stmt 0 view .LVU36
+ 126 0066 8091 0000 		lds r24,start
+ 127 006a 8927      		eor r24,r25
+ 128 006c 8093 0000 		sts start,r24
+  47:main.c        ****         butt[14] = 0;
+ 129               		.loc 1 47 9 is_stmt 1 view .LVU37
+ 130               		.loc 1 47 18 is_stmt 0 view .LVU38
+ 131 0070 1092 0000 		sts butt+14,__zero_reg__
+ 132               	.L3:
+ 133               	/* epilogue start */
+  48:main.c        ****     }
+  49:main.c        **** }
+ 134               		.loc 1 49 1 view .LVU39
+ 135 0074 0895      		ret
+ 136               		.cfi_endproc
+ 137               	.LFE13:
+ 139               	.global	receive
+ 141               	receive:
+ 142               	.LFB14:
+  50:main.c        **** 
+  51:main.c        **** void receive(void)
+  52:main.c        **** {
+ 143               		.loc 1 52 1 is_stmt 1 view -0
+ 144               		.cfi_startproc
+ 145               	/* prologue: function */
+ 146               	/* frame size = 0 */
+ 147               	/* stack size = 0 */
+ 148               	.L__stack_usage = 0
+  53:main.c        ****     if ((RX_raw>200) && (RX_raw<255))
+ 149               		.loc 1 53 5 view .LVU41
+ 150               		.loc 1 53 22 is_stmt 0 view .LVU42
+ 151 0076 E091 0000 		lds r30,RX_raw
+ 152 007a 87E3      		ldi r24,lo8(55)
+ 153 007c 8E0F      		add r24,r30
+ 154               		.loc 1 53 8 view .LVU43
+ 155 007e 8633      		cpi r24,lo8(54)
+ 156 0080 00F4      		brsh .L10
+  54:main.c        ****     {
+  55:main.c        ****         RX_ad1=RX_raw;
+ 157               		.loc 1 55 9 is_stmt 1 view .LVU44
+ 158               		.loc 1 55 15 is_stmt 0 view .LVU45
+ 159 0082 E093 0000 		sts RX_ad1,r30
+  56:main.c        ****         if ((RX_raw>230) && (RX_raw<247))
+ 160               		.loc 1 56 9 is_stmt 1 view .LVU46
+ 161               		.loc 1 56 26 is_stmt 0 view .LVU47
+ 162 0086 E75E      		subi r30,lo8(-(25))
+ 163               		.loc 1 56 12 view .LVU48
+ 164 0088 E031      		cpi r30,lo8(16)
+ 165 008a 00F4      		brsh .L9
+ 166               	.LBB2:
+  57:main.c        ****         {
+  58:main.c        ****             uint8_t r_temp0=(RX_raw-231);
+ 167               		.loc 1 58 13 is_stmt 1 view .LVU49
+ 168               	.LVL0:
+  59:main.c        ****             butt[r_temp0]=1;
+ 169               		.loc 1 59 13 view .LVU50
+ 170               		.loc 1 59 17 is_stmt 0 view .LVU51
+ 171 008c F0E0      		ldi r31,0
+ 172               		.loc 1 59 26 view .LVU52
+ 173 008e E050      		subi r30,lo8(-(butt))
+ 174 0090 F040      		sbci r31,hi8(-(butt))
+ 175               	.LVL1:
+ 176               		.loc 1 59 26 view .LVU53
+ 177 0092 81E0      		ldi r24,lo8(1)
+ 178 0094 8083      		st Z,r24
+ 179 0096 0895      		ret
+ 180               	.LVL2:
+ 181               	.L10:
+ 182               		.loc 1 59 26 view .LVU54
+ 183               	.LBE2:
+  60:main.c        ****         }
+  61:main.c        ****     }
+  62:main.c        ****     else if ((RX_raw>=0) && (RX_raw<201))
+ 184               		.loc 1 62 10 is_stmt 1 view .LVU55
+ 185               		.loc 1 62 13 is_stmt 0 view .LVU56
+ 186 0098 E93C      		cpi r30,lo8(-55)
+ 187 009a 00F4      		brsh .L9
+ 188               	.LBB3:
+  63:main.c        ****     {
+  64:main.c        ****         uint8_t r_temp1=(RX_ad1-201);
+ 189               		.loc 1 64 9 is_stmt 1 view .LVU57
+ 190               		.loc 1 64 17 is_stmt 0 view .LVU58
+ 191 009c A091 0000 		lds r26,RX_ad1
+ 192 00a0 A95C      		subi r26,lo8(-(55))
+ 193               	.LVL3:
+  65:main.c        ****         if (r_temp1<16)
+ 194               		.loc 1 65 9 is_stmt 1 view .LVU59
+ 195               		.loc 1 65 12 is_stmt 0 view .LVU60
+ 196 00a2 A031      		cpi r26,lo8(16)
+ 197 00a4 00F4      		brsh .L9
+  66:main.c        ****         {
+  67:main.c        ****             RX[r_temp1]=RX_raw;
+ 198               		.loc 1 67 13 is_stmt 1 view .LVU61
+ 199               		.loc 1 67 15 is_stmt 0 view .LVU62
+ 200 00a6 B0E0      		ldi r27,0
+ 201               		.loc 1 67 24 view .LVU63
+ 202 00a8 A050      		subi r26,lo8(-(RX))
+ 203 00aa B040      		sbci r27,hi8(-(RX))
+ 204               	.LVL4:
+ 205               		.loc 1 67 24 view .LVU64
+ 206 00ac EC93      		st X,r30
+ 207               	.LVL5:
+ 208               	.L9:
+ 209               	/* epilogue start */
+ 210               		.loc 1 67 24 view .LVU65
+ 211               	.LBE3:
+  68:main.c        ****         }
+  69:main.c        ****     }
+  70:main.c        **** }
+ 212               		.loc 1 70 1 view .LVU66
+ 213 00ae 0895      		ret
+ 214               		.cfi_endproc
+ 215               	.LFE14:
+ 217               	.global	__vector_51
+ 219               	__vector_51:
+ 220               	.LFB15:
+  71:main.c        **** 
+  72:main.c        **** ISR(USART2_RX_vect)
+  73:main.c        **** {
+ 221               		.loc 1 73 1 is_stmt 1 view -0
+ 222               		.cfi_startproc
+ 223 00b0 1F92      		push r1
+ 224               	.LCFI0:
+ 225               		.cfi_def_cfa_offset 4
+ 226               		.cfi_offset 1, -3
+ 227 00b2 0F92      		push r0
+ 228               	.LCFI1:
+ 229               		.cfi_def_cfa_offset 5
+ 230               		.cfi_offset 0, -4
+ 231 00b4 0FB6      		in r0,__SREG__
+ 232 00b6 0F92      		push r0
+ 233 00b8 1124      		clr __zero_reg__
+ 234 00ba 0BB6      		in r0,__RAMPZ__
+ 235 00bc 0F92      		push r0
+ 236 00be 2F93      		push r18
+ 237               	.LCFI2:
+ 238               		.cfi_def_cfa_offset 6
+ 239               		.cfi_offset 18, -5
+ 240 00c0 3F93      		push r19
+ 241               	.LCFI3:
+ 242               		.cfi_def_cfa_offset 7
+ 243               		.cfi_offset 19, -6
+ 244 00c2 4F93      		push r20
+ 245               	.LCFI4:
+ 246               		.cfi_def_cfa_offset 8
+ 247               		.cfi_offset 20, -7
+ 248 00c4 5F93      		push r21
+ 249               	.LCFI5:
+ 250               		.cfi_def_cfa_offset 9
+ 251               		.cfi_offset 21, -8
+ 252 00c6 6F93      		push r22
+ 253               	.LCFI6:
+ 254               		.cfi_def_cfa_offset 10
+ 255               		.cfi_offset 22, -9
+ 256 00c8 7F93      		push r23
+ 257               	.LCFI7:
+ 258               		.cfi_def_cfa_offset 11
+ 259               		.cfi_offset 23, -10
+ 260 00ca 8F93      		push r24
+ 261               	.LCFI8:
+ 262               		.cfi_def_cfa_offset 12
+ 263               		.cfi_offset 24, -11
+ 264 00cc 9F93      		push r25
+ 265               	.LCFI9:
+ 266               		.cfi_def_cfa_offset 13
+ 267               		.cfi_offset 25, -12
+ 268 00ce AF93      		push r26
+ 269               	.LCFI10:
+ 270               		.cfi_def_cfa_offset 14
+ 271               		.cfi_offset 26, -13
+ 272 00d0 BF93      		push r27
+ 273               	.LCFI11:
+ 274               		.cfi_def_cfa_offset 15
+ 275               		.cfi_offset 27, -14
+ 276 00d2 EF93      		push r30
+ 277               	.LCFI12:
+ 278               		.cfi_def_cfa_offset 16
+ 279               		.cfi_offset 30, -15
+ 280 00d4 FF93      		push r31
+ 281               	.LCFI13:
+ 282               		.cfi_def_cfa_offset 17
+ 283               		.cfi_offset 31, -16
+ 284               	/* prologue: Signal */
+ 285               	/* frame size = 0 */
+ 286               	/* stack size = 16 */
+ 287               	.L__stack_usage = 16
+  74:main.c        ****     RX_raw=UDR2;
+ 288               		.loc 1 74 5 view .LVU68
+ 289               		.loc 1 74 12 is_stmt 0 view .LVU69
+ 290 00d6 8091 D600 		lds r24,214
+ 291               		.loc 1 74 11 view .LVU70
+ 292 00da 8093 0000 		sts RX_raw,r24
+  75:main.c        ****     receive();
+ 293               		.loc 1 75 5 is_stmt 1 view .LVU71
+ 294 00de 0E94 0000 		call receive
+ 295               	.LVL6:
+ 296               	/* epilogue start */
+  76:main.c        **** }
+ 297               		.loc 1 76 1 is_stmt 0 view .LVU72
+ 298 00e2 FF91      		pop r31
+ 299 00e4 EF91      		pop r30
+ 300 00e6 BF91      		pop r27
+ 301 00e8 AF91      		pop r26
+ 302 00ea 9F91      		pop r25
+ 303 00ec 8F91      		pop r24
+ 304 00ee 7F91      		pop r23
+ 305 00f0 6F91      		pop r22
+ 306 00f2 5F91      		pop r21
+ 307 00f4 4F91      		pop r20
+ 308 00f6 3F91      		pop r19
+ 309 00f8 2F91      		pop r18
+ 310 00fa 0F90      		pop r0
+ 311 00fc 0BBE      		out __RAMPZ__,r0
+ 312 00fe 0F90      		pop r0
+ 313 0100 0FBE      		out __SREG__,r0
+ 314 0102 0F90      		pop r0
+ 315 0104 1F90      		pop r1
+ 316 0106 1895      		reti
+ 317               		.cfi_endproc
+ 318               	.LFE15:
+ 320               		.section	.text.startup,"ax",@progbits
+ 321               	.global	main
+ 323               	main:
+ 324               	.LFB16:
+  77:main.c        **** 
+  78:main.c        **** int main()
+  79:main.c        **** {
+ 325               		.loc 1 79 1 is_stmt 1 view -0
+ 326               		.cfi_startproc
+ 327               	/* prologue: function */
+ 328               	/* frame size = 0 */
+ 329               	/* stack size = 0 */
+ 330               	.L__stack_usage = 0
+  80:main.c        ****     bluetooth_init();
+ 331               		.loc 1 80 5 view .LVU74
+ 332 0000 0E94 0000 		call bluetooth_init
+ 333               	.LVL7:
+  81:main.c        ****     usart_init();
+ 334               		.loc 1 81 5 view .LVU75
+ 335 0004 0E94 0000 		call usart_init
+ 336               	.LVL8:
+ 337               	.L16:
+  82:main.c        ****     
+  83:main.c        ****     while(1)
+ 338               		.loc 1 83 5 discriminator 1 view .LVU76
+  84:main.c        ****     {
+  85:main.c        ****     }
+ 339               		.loc 1 85 5 discriminator 1 view .LVU77
+ 340 0008 00C0      		rjmp .L16
+ 341               		.cfi_endproc
+ 342               	.LFE16:
+ 344               		.comm	result,4,1
+ 345               		.comm	RX,4,1
+ 346               		.comm	RX_ad1,1,1
+ 347               		.comm	RX_ad,4,1
+ 348               		.comm	butt,16,1
+ 349               		.comm	RX_raw,1,1
+ 350               	.global	start
+ 351               		.section .bss
+ 354               	start:
+ 355 0000 00        		.zero	1
+ 356               	.global	actuate_in
+ 359               	actuate_in:
+ 360 0001 00        		.zero	1
+ 361               	.global	actuate_out
+ 364               	actuate_out:
+ 365 0002 00        		.zero	1
+ 366               		.text
+ 367               	.Letext0:
+ 368               		.file 2 "/usr/local/Cellar/avr-gcc/8.3.0/avr/include/stdint.h"
+ 369               		.file 3 "/usr/local/Cellar/avr-gcc/8.3.0/lib/avr-gcc/8/gcc/avr/8.3.0/include/stddef.h"
+ 370               		.file 4 "/usr/local/Cellar/avr-gcc/8.3.0/avr/include/stdlib.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 main.c
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:2      *ABS*:000000000000003e __SP_H__
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:3      *ABS*:000000000000003d __SP_L__
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:4      *ABS*:000000000000003f __SREG__
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:5      *ABS*:000000000000003b __RAMPZ__
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:6      *ABS*:0000000000000000 __tmp_reg__
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:7      *ABS*:0000000000000001 __zero_reg__
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:13     .text:0000000000000000 bluetooth_init
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:44     .text:0000000000000016 usart_init
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:75     .text:000000000000002e ps2_values
+                            *COM*:0000000000000010 butt
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:354    .bss:0000000000000000 start
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:141    .text:0000000000000076 receive
+                            *COM*:0000000000000001 RX_raw
+                            *COM*:0000000000000001 RX_ad1
+                            *COM*:0000000000000004 RX
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:219    .text:00000000000000b0 __vector_51
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:323    .text.startup:0000000000000000 main
+                            *COM*:0000000000000004 result
+                            *COM*:0000000000000004 RX_ad
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:359    .bss:0000000000000001 actuate_in
+/var/folders/xl/jwlq1hcs34lc6fgtyyc2bs7c0000gn/T//ccMHeZY5.s:364    .bss:0000000000000002 actuate_out
+
+UNDEFINED SYMBOLS
+__do_clear_bss

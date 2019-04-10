@@ -1,0 +1,1941 @@
+   1               		.file	"main.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__RAMPZ__ = 0x3b
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.text
+   9               	.Ltext0:
+  10               		.cfi_sections	.debug_frame
+  11               	.global	port_init
+  13               	port_init:
+  14               	.LFB11:
+  15               		.file 1 "main.c"
+   1:main.c        **** //
+   2:main.c        **** //  main.c
+   3:main.c        **** //  AR
+   4:main.c        **** //
+   5:main.c        **** //  Created by Soofiyan Atar on 14/12/18.
+   6:main.c        **** //
+   7:main.c        **** #define BAUD 9600
+   8:main.c        **** #define BAUDRATE ((F_CPU/(BAUD*16UL)-1))
+   9:main.c        **** #define target1 1000
+  10:main.c        **** #define target2 1000
+  11:main.c        **** 
+  12:main.c        **** #define PS_L1 0
+  13:main.c        **** #define PS_R1 1
+  14:main.c        **** #define PS_L2 2
+  15:main.c        **** #define PS_R2 3
+  16:main.c        **** #define PS_L3 4
+  17:main.c        **** #define PS_R3 5
+  18:main.c        **** #define PS_TRIANGLE 6
+  19:main.c        **** #define PS_SQUARE 7
+  20:main.c        **** #define PS_CROSS 8
+  21:main.c        **** #define PS_CIRCLE 9
+  22:main.c        **** #define PS_UP 10
+  23:main.c        **** #define PS_LEFT 11
+  24:main.c        **** #define PS_DOWN 12
+  25:main.c        **** #define PS_RIGHT 13
+  26:main.c        **** #define PS_START 14
+  27:main.c        **** #define PS_SELECT 15
+  28:main.c        **** 
+  29:main.c        **** #include <avr_compiler.h>
+  30:main.c        **** //#include "lcd.h"
+  31:main.c        **** 
+  32:main.c        **** uint8_t butt[16],RX_raw = 0,RX_ad1 = 0,RX[4],pwm_range = 255,RX_range = 200;
+  33:main.c        **** int xj1=0,yj1=0,xj2=0,yj2=0,x_vect=0,y_vect =0;
+  34:main.c        **** bool currstatea1  = 0,currstateb1 = 0,currstatea2  = 0,currstateb2 = 0;
+  35:main.c        **** int countercw2 = 1000,countercw1 = 0;
+  36:main.c        **** bool i=0,check = 1,counter = 1;
+  37:main.c        **** bool start = 0;
+  38:main.c        **** int speed1 = 150,speed2 = 150;
+  39:main.c        **** 
+  40:main.c        **** void port_init(void)
+  41:main.c        **** {
+  16               		.loc 1 41 0
+  17               		.cfi_startproc
+  18               	/* prologue: function */
+  19               	/* frame size = 0 */
+  20               	/* stack size = 0 */
+  21               	.L__stack_usage = 0
+  42:main.c        ****     //DDRD = 0x00;  //encoder as input
+  43:main.c        ****   //  PORTD = 0xFF; //internal pullup(necessary)
+  44:main.c        ****     DDRJ |= (1<<PJ0)|(1<<PJ1);
+  22               		.loc 1 44 0
+  23 0000 E4E0      		ldi r30,lo8(4)
+  24 0002 F1E0      		ldi r31,lo8(1)
+  25 0004 8081      		ld r24,Z
+  26 0006 8360      		ori r24,lo8(3)
+  27 0008 8083      		st Z,r24
+  45:main.c        ****     PORTJ |= (1<<PJ1)|(1<<PJ0);//bluetooth
+  28               		.loc 1 45 0
+  29 000a E5E0      		ldi r30,lo8(5)
+  30 000c F1E0      		ldi r31,lo8(1)
+  31 000e 8081      		ld r24,Z
+  32 0010 8360      		ori r24,lo8(3)
+  33 0012 8083      		st Z,r24
+  46:main.c        ****     DDRH = 0xFF;  //pwm of drive
+  34               		.loc 1 46 0
+  35 0014 8FEF      		ldi r24,lo8(-1)
+  36 0016 8093 0101 		sts 257,r24
+  47:main.c        ****     PORTH = 0xFF; //high pwm port
+  37               		.loc 1 47 0
+  38 001a 8093 0201 		sts 258,r24
+  48:main.c        ****     DDRK = 0xFF;  //direction of drive
+  39               		.loc 1 48 0
+  40 001e 8093 0701 		sts 263,r24
+  49:main.c        ****     //PORTK = 0xFF;
+  50:main.c        ****     DDRF = 0xFF;
+  41               		.loc 1 50 0
+  42 0022 80BB      		out 0x10,r24
+  43 0024 0895      		ret
+  44               		.cfi_endproc
+  45               	.LFE11:
+  47               	.global	timer_init_motor
+  49               	timer_init_motor:
+  50               	.LFB12:
+  51:main.c        **** }
+  52:main.c        **** 
+  53:main.c        **** //void exti_init(void)
+  54:main.c        **** //{
+  55:main.c        **** //    EIMSK |=(1<<INT0)|(1<<INT1)|(1<<INT2)|(1<<INT3);
+  56:main.c        **** //    EICRA |=(1<<ISC00)|(1<<ISC10)|(1<<ISC20)|(1<<ISC30);
+  57:main.c        **** //}
+  58:main.c        **** 
+  59:main.c        **** void timer_init_motor(void)
+  60:main.c        **** {
+  51               		.loc 1 60 0
+  52               		.cfi_startproc
+  53               	/* prologue: function */
+  54               	/* frame size = 0 */
+  55               	/* stack size = 0 */
+  56               	.L__stack_usage = 0
+  61:main.c        ****     TCCR4A |= (1<<COM4A1)|(1<<COM4B1)|(1<<COM4C1)|(1<<WGM40);
+  57               		.loc 1 61 0
+  58 0026 E0EA      		ldi r30,lo8(-96)
+  59 0028 F0E0      		ldi r31,0
+  60 002a 8081      		ld r24,Z
+  61 002c 896A      		ori r24,lo8(-87)
+  62 002e 8083      		st Z,r24
+  62:main.c        ****     TCCR4B |= (1<<WGM42)|(1<<CS41)|(1<<CS40);
+  63               		.loc 1 62 0
+  64 0030 E1EA      		ldi r30,lo8(-95)
+  65 0032 F0E0      		ldi r31,0
+  66 0034 8081      		ld r24,Z
+  67 0036 8B60      		ori r24,lo8(11)
+  68 0038 8083      		st Z,r24
+  69 003a 0895      		ret
+  70               		.cfi_endproc
+  71               	.LFE12:
+  73               	.global	limit_var
+  75               	limit_var:
+  76               	.LFB13:
+  63:main.c        **** }
+  64:main.c        **** 
+  65:main.c        **** //ISR(INT1_vect)
+  66:main.c        **** //{
+  67:main.c        **** //    if((PIND & 0x02) == 0x02)
+  68:main.c        **** //    {
+  69:main.c        **** //        currstatea1 = 1;
+  70:main.c        **** //        if(currstateb1 == 0)
+  71:main.c        **** //        {
+  72:main.c        **** //            countercw1 --;
+  73:main.c        **** //        }
+  74:main.c        **** //        else
+  75:main.c        **** //        {
+  76:main.c        **** //            countercw1 ++;
+  77:main.c        **** //        }
+  78:main.c        **** //    }
+  79:main.c        **** //    else
+  80:main.c        **** //    {
+  81:main.c        **** //        currstatea1 = 0;
+  82:main.c        **** //        if(currstateb1 == 0)
+  83:main.c        **** //        {
+  84:main.c        **** //            countercw1 ++;
+  85:main.c        **** //        }
+  86:main.c        **** //        else
+  87:main.c        **** //        {
+  88:main.c        **** //            countercw1 --;
+  89:main.c        **** //        }
+  90:main.c        **** //    }
+  91:main.c        **** //}
+  92:main.c        **** //
+  93:main.c        **** //ISR(INT0_vect)
+  94:main.c        **** //{
+  95:main.c        **** //    if((PIND & 0x01) == 0x01)
+  96:main.c        **** //    {
+  97:main.c        **** //        currstateb1 = 1;
+  98:main.c        **** //        if(currstatea1 == 0)
+  99:main.c        **** //        {
+ 100:main.c        **** //            countercw1 ++;
+ 101:main.c        **** //        }
+ 102:main.c        **** //        else
+ 103:main.c        **** //        {
+ 104:main.c        **** //            countercw1 --;
+ 105:main.c        **** //        }
+ 106:main.c        **** //    }
+ 107:main.c        **** //    else
+ 108:main.c        **** //    {
+ 109:main.c        **** //        currstateb1 = 0;
+ 110:main.c        **** //        if(currstatea1 == 0)
+ 111:main.c        **** //        {
+ 112:main.c        **** //            countercw1 --;
+ 113:main.c        **** //        }
+ 114:main.c        **** //        else
+ 115:main.c        **** //        {
+ 116:main.c        **** //            countercw1 ++;
+ 117:main.c        **** //        }
+ 118:main.c        **** //    }
+ 119:main.c        **** //}
+ 120:main.c        **** //
+ 121:main.c        **** //ISR(INT3_vect)
+ 122:main.c        **** //{
+ 123:main.c        **** //    if((PIND & 0x08) == 0x08)
+ 124:main.c        **** //    {
+ 125:main.c        **** //        currstatea2 = 1;
+ 126:main.c        **** //        if(currstateb2 == 0)
+ 127:main.c        **** //        {
+ 128:main.c        **** //            countercw2 --;
+ 129:main.c        **** //        }
+ 130:main.c        **** //        else
+ 131:main.c        **** //        {
+ 132:main.c        **** //            countercw2 ++;
+ 133:main.c        **** //        }
+ 134:main.c        **** //    }
+ 135:main.c        **** //    else
+ 136:main.c        **** //    {
+ 137:main.c        **** //        currstatea2 = 0;
+ 138:main.c        **** //        if(currstateb2 == 0)
+ 139:main.c        **** //        {
+ 140:main.c        **** //            countercw2 ++;
+ 141:main.c        **** //        }
+ 142:main.c        **** //        else
+ 143:main.c        **** //        {
+ 144:main.c        **** //            countercw2 --;
+ 145:main.c        **** //        }
+ 146:main.c        **** //    }
+ 147:main.c        **** //}
+ 148:main.c        **** //
+ 149:main.c        **** //ISR(INT2_vect)
+ 150:main.c        **** //{
+ 151:main.c        **** //    if((PIND & 0x04) == 0x04)
+ 152:main.c        **** //    {
+ 153:main.c        **** //        currstateb2 = 1;
+ 154:main.c        **** //        if(currstatea2 == 0)
+ 155:main.c        **** //        {
+ 156:main.c        **** //            countercw2 ++;
+ 157:main.c        **** //        }
+ 158:main.c        **** //        else
+ 159:main.c        **** //        {
+ 160:main.c        **** //            countercw2 --;
+ 161:main.c        **** //        }
+ 162:main.c        **** //    }
+ 163:main.c        **** //    else
+ 164:main.c        **** //    {
+ 165:main.c        **** //        currstateb2 = 0;
+ 166:main.c        **** //        if(currstatea2 == 0)
+ 167:main.c        **** //        {
+ 168:main.c        **** //            countercw2 --;
+ 169:main.c        **** //        }
+ 170:main.c        **** //        else
+ 171:main.c        **** //        {
+ 172:main.c        **** //            countercw2 ++;
+ 173:main.c        **** //        }
+ 174:main.c        **** //    }
+ 175:main.c        **** //}
+ 176:main.c        **** 
+ 177:main.c        **** long limit_var(long in_var, long l_limit, long h_limit)
+ 178:main.c        **** {
+  77               		.loc 1 178 0
+  78               		.cfi_startproc
+  79               	.LVL0:
+  80 003c EF92      		push r14
+  81               	.LCFI0:
+  82               		.cfi_def_cfa_offset 4
+  83               		.cfi_offset 14, -3
+  84 003e FF92      		push r15
+  85               	.LCFI1:
+  86               		.cfi_def_cfa_offset 5
+  87               		.cfi_offset 15, -4
+  88 0040 0F93      		push r16
+  89               	.LCFI2:
+  90               		.cfi_def_cfa_offset 6
+  91               		.cfi_offset 16, -5
+  92 0042 1F93      		push r17
+  93               	.LCFI3:
+  94               		.cfi_def_cfa_offset 7
+  95               		.cfi_offset 17, -6
+  96               	/* prologue: function */
+  97               	/* frame size = 0 */
+  98               	/* stack size = 4 */
+  99               	.L__stack_usage = 4
+ 179:main.c        ****     if (in_var>h_limit)
+ 100               		.loc 1 179 0
+ 101 0044 E616      		cp r14,r22
+ 102 0046 F706      		cpc r15,r23
+ 103 0048 0807      		cpc r16,r24
+ 104 004a 1907      		cpc r17,r25
+ 105 004c 04F0      		brlt .L6
+ 106 004e 6217      		cp r22,r18
+ 107 0050 7307      		cpc r23,r19
+ 108 0052 8407      		cpc r24,r20
+ 109 0054 9507      		cpc r25,r21
+ 110 0056 04F4      		brge .L4
+ 111 0058 CA01      		movw r24,r20
+ 112 005a B901      		movw r22,r18
+ 113               	.LVL1:
+ 114 005c 00C0      		rjmp .L4
+ 115               	.LVL2:
+ 116               	.L6:
+ 117 005e C801      		movw r24,r16
+ 118 0060 B701      		movw r22,r14
+ 119               	.LVL3:
+ 120               	.L4:
+ 121               	/* epilogue start */
+ 180:main.c        ****     {
+ 181:main.c        ****         in_var=h_limit;
+ 182:main.c        ****     }
+ 183:main.c        ****     else if (in_var<l_limit)
+ 184:main.c        ****     {
+ 185:main.c        ****         in_var=l_limit;
+ 186:main.c        ****     }
+ 187:main.c        ****     return in_var;
+ 188:main.c        **** }
+ 122               		.loc 1 188 0
+ 123 0062 1F91      		pop r17
+ 124 0064 0F91      		pop r16
+ 125 0066 FF90      		pop r15
+ 126 0068 EF90      		pop r14
+ 127               	.LVL4:
+ 128 006a 0895      		ret
+ 129               		.cfi_endproc
+ 130               	.LFE13:
+ 132               	.global	drivewheel_1
+ 134               	drivewheel_1:
+ 135               	.LFB14:
+ 189:main.c        **** 
+ 190:main.c        **** void drivewheel_1(long sp_vect, long l_lim, long h_lim)//black uper red niche
+ 191:main.c        **** {
+ 136               		.loc 1 191 0
+ 137               		.cfi_startproc
+ 138               	.LVL5:
+ 139 006c EF92      		push r14
+ 140               	.LCFI4:
+ 141               		.cfi_def_cfa_offset 4
+ 142               		.cfi_offset 14, -3
+ 143 006e FF92      		push r15
+ 144               	.LCFI5:
+ 145               		.cfi_def_cfa_offset 5
+ 146               		.cfi_offset 15, -4
+ 147 0070 0F93      		push r16
+ 148               	.LCFI6:
+ 149               		.cfi_def_cfa_offset 6
+ 150               		.cfi_offset 16, -5
+ 151 0072 1F93      		push r17
+ 152               	.LCFI7:
+ 153               		.cfi_def_cfa_offset 7
+ 154               		.cfi_offset 17, -6
+ 155               	/* prologue: function */
+ 156               	/* frame size = 0 */
+ 157               	/* stack size = 4 */
+ 158               	.L__stack_usage = 4
+ 159               	.LVL6:
+ 160               	.LBB10:
+ 161               	.LBB11:
+ 179:main.c        ****     if (in_var>h_limit)
+ 162               		.loc 1 179 0
+ 163 0074 E616      		cp r14,r22
+ 164 0076 F706      		cpc r15,r23
+ 165 0078 0807      		cpc r16,r24
+ 166 007a 1907      		cpc r17,r25
+ 167 007c 04F0      		brlt .L14
+ 168 007e DC01      		movw r26,r24
+ 169 0080 CB01      		movw r24,r22
+ 170 0082 8217      		cp r24,r18
+ 171 0084 9307      		cpc r25,r19
+ 172 0086 A407      		cpc r26,r20
+ 173 0088 B507      		cpc r27,r21
+ 174 008a 04F4      		brge .L9
+ 175 008c DA01      		movw r26,r20
+ 176 008e C901      		movw r24,r18
+ 177 0090 00C0      		rjmp .L9
+ 178               	.L14:
+ 179 0092 D801      		movw r26,r16
+ 180 0094 C701      		movw r24,r14
+ 181               	.L9:
+ 182               	.LVL7:
+ 183               	.LBE11:
+ 184               	.LBE10:
+ 192:main.c        ****     sp_vect = limit_var(sp_vect,l_lim,h_lim);
+ 193:main.c        ****     if (sp_vect<(-5))
+ 185               		.loc 1 193 0
+ 186 0096 8B3F      		cpi r24,-5
+ 187 0098 2FEF      		ldi r18,-1
+ 188 009a 9207      		cpc r25,r18
+ 189 009c A207      		cpc r26,r18
+ 190 009e B207      		cpc r27,r18
+ 191               	.LVL8:
+ 192 00a0 04F4      		brge .L11
+ 194:main.c        ****     {
+ 195:main.c        ****         PORTK&=(~(1<<PK0));
+ 193               		.loc 1 195 0
+ 194 00a2 2091 0801 		lds r18,264
+ 195 00a6 2E7F      		andi r18,lo8(-2)
+ 196 00a8 2093 0801 		sts 264,r18
+ 196:main.c        ****         PORTK|=(1<<PK1);
+ 197               		.loc 1 196 0
+ 198 00ac 2091 0801 		lds r18,264
+ 199 00b0 2260      		ori r18,lo8(2)
+ 200 00b2 2093 0801 		sts 264,r18
+ 197:main.c        ****         sp_vect=(-sp_vect);
+ 201               		.loc 1 197 0
+ 202 00b6 B095      		com r27
+ 203 00b8 A095      		com r26
+ 204 00ba 9095      		com r25
+ 205 00bc 8195      		neg r24
+ 206 00be 9F4F      		sbci r25,lo8(-1)
+ 207 00c0 AF4F      		sbci r26,lo8(-1)
+ 208 00c2 BF4F      		sbci r27,lo8(-1)
+ 209               	.LVL9:
+ 210 00c4 00C0      		rjmp .L12
+ 211               	.LVL10:
+ 212               	.L11:
+ 198:main.c        ****     }
+ 199:main.c        ****     else if (sp_vect>5)
+ 213               		.loc 1 199 0
+ 214 00c6 8630      		cpi r24,6
+ 215 00c8 9105      		cpc r25,__zero_reg__
+ 216 00ca A105      		cpc r26,__zero_reg__
+ 217 00cc B105      		cpc r27,__zero_reg__
+ 218 00ce 04F0      		brlt .L13
+ 200:main.c        ****     {
+ 201:main.c        ****         PORTK&=(~(1<<PK1));
+ 219               		.loc 1 201 0
+ 220 00d0 2091 0801 		lds r18,264
+ 221 00d4 2D7F      		andi r18,lo8(-3)
+ 222 00d6 2093 0801 		sts 264,r18
+ 202:main.c        ****         PORTK|=(1<<PK0);
+ 223               		.loc 1 202 0
+ 224 00da 2091 0801 		lds r18,264
+ 225 00de 2160      		ori r18,lo8(1)
+ 226 00e0 2093 0801 		sts 264,r18
+ 227 00e4 00C0      		rjmp .L12
+ 228               	.L13:
+ 203:main.c        ****     }
+ 204:main.c        ****     else
+ 205:main.c        ****     {
+ 206:main.c        ****         PORTK &= ~(1<<PK0);
+ 229               		.loc 1 206 0
+ 230 00e6 8091 0801 		lds r24,264
+ 231               	.LVL11:
+ 232 00ea 8E7F      		andi r24,lo8(-2)
+ 233 00ec 8093 0801 		sts 264,r24
+ 207:main.c        ****         PORTK &= ~(1<<PK1);
+ 234               		.loc 1 207 0
+ 235 00f0 8091 0801 		lds r24,264
+ 236 00f4 8D7F      		andi r24,lo8(-3)
+ 237 00f6 8093 0801 		sts 264,r24
+ 238               	.LVL12:
+ 208:main.c        ****         sp_vect=0;
+ 239               		.loc 1 208 0
+ 240 00fa 80E0      		ldi r24,0
+ 241 00fc 90E0      		ldi r25,0
+ 242 00fe DC01      		movw r26,r24
+ 243               	.LVL13:
+ 244               	.L12:
+ 209:main.c        ****     }
+ 210:main.c        ****     OCR4A = sp_vect;
+ 245               		.loc 1 210 0
+ 246 0100 9093 A900 		sts 168+1,r25
+ 247 0104 8093 A800 		sts 168,r24
+ 248               	/* epilogue start */
+ 211:main.c        ****     
+ 212:main.c        **** }
+ 249               		.loc 1 212 0
+ 250 0108 1F91      		pop r17
+ 251 010a 0F91      		pop r16
+ 252 010c FF90      		pop r15
+ 253 010e EF90      		pop r14
+ 254               	.LVL14:
+ 255 0110 0895      		ret
+ 256               		.cfi_endproc
+ 257               	.LFE14:
+ 259               	.global	drivewheel_2
+ 261               	drivewheel_2:
+ 262               	.LFB15:
+ 213:main.c        **** 
+ 214:main.c        **** void drivewheel_2(long sp_vect, long l_lim, long h_lim)//red upar black niche
+ 215:main.c        **** {
+ 263               		.loc 1 215 0
+ 264               		.cfi_startproc
+ 265               	.LVL15:
+ 266 0112 EF92      		push r14
+ 267               	.LCFI8:
+ 268               		.cfi_def_cfa_offset 4
+ 269               		.cfi_offset 14, -3
+ 270 0114 FF92      		push r15
+ 271               	.LCFI9:
+ 272               		.cfi_def_cfa_offset 5
+ 273               		.cfi_offset 15, -4
+ 274 0116 0F93      		push r16
+ 275               	.LCFI10:
+ 276               		.cfi_def_cfa_offset 6
+ 277               		.cfi_offset 16, -5
+ 278 0118 1F93      		push r17
+ 279               	.LCFI11:
+ 280               		.cfi_def_cfa_offset 7
+ 281               		.cfi_offset 17, -6
+ 282               	/* prologue: function */
+ 283               	/* frame size = 0 */
+ 284               	/* stack size = 4 */
+ 285               	.L__stack_usage = 4
+ 286               	.LVL16:
+ 287               	.LBB12:
+ 288               	.LBB13:
+ 179:main.c        ****     if (in_var>h_limit)
+ 289               		.loc 1 179 0
+ 290 011a E616      		cp r14,r22
+ 291 011c F706      		cpc r15,r23
+ 292 011e 0807      		cpc r16,r24
+ 293 0120 1907      		cpc r17,r25
+ 294 0122 04F0      		brlt .L21
+ 295 0124 DC01      		movw r26,r24
+ 296 0126 CB01      		movw r24,r22
+ 297 0128 8217      		cp r24,r18
+ 298 012a 9307      		cpc r25,r19
+ 299 012c A407      		cpc r26,r20
+ 300 012e B507      		cpc r27,r21
+ 301 0130 04F4      		brge .L16
+ 302 0132 DA01      		movw r26,r20
+ 303 0134 C901      		movw r24,r18
+ 304 0136 00C0      		rjmp .L16
+ 305               	.L21:
+ 306 0138 D801      		movw r26,r16
+ 307 013a C701      		movw r24,r14
+ 308               	.L16:
+ 309               	.LVL17:
+ 310               	.LBE13:
+ 311               	.LBE12:
+ 216:main.c        ****     sp_vect = limit_var(sp_vect,l_lim,h_lim);
+ 217:main.c        ****     if (sp_vect<(-5))
+ 312               		.loc 1 217 0
+ 313 013c 8B3F      		cpi r24,-5
+ 314 013e 2FEF      		ldi r18,-1
+ 315 0140 9207      		cpc r25,r18
+ 316 0142 A207      		cpc r26,r18
+ 317 0144 B207      		cpc r27,r18
+ 318               	.LVL18:
+ 319 0146 04F4      		brge .L18
+ 218:main.c        ****     {
+ 219:main.c        ****         PORTK &= (~(1<<PK2));
+ 320               		.loc 1 219 0
+ 321 0148 2091 0801 		lds r18,264
+ 322 014c 2B7F      		andi r18,lo8(-5)
+ 323 014e 2093 0801 		sts 264,r18
+ 220:main.c        ****         PORTK |= (1<<PK3);
+ 324               		.loc 1 220 0
+ 325 0152 2091 0801 		lds r18,264
+ 326 0156 2860      		ori r18,lo8(8)
+ 327 0158 2093 0801 		sts 264,r18
+ 221:main.c        ****         sp_vect = (-sp_vect);
+ 328               		.loc 1 221 0
+ 329 015c B095      		com r27
+ 330 015e A095      		com r26
+ 331 0160 9095      		com r25
+ 332 0162 8195      		neg r24
+ 333 0164 9F4F      		sbci r25,lo8(-1)
+ 334 0166 AF4F      		sbci r26,lo8(-1)
+ 335 0168 BF4F      		sbci r27,lo8(-1)
+ 336               	.LVL19:
+ 337 016a 00C0      		rjmp .L19
+ 338               	.LVL20:
+ 339               	.L18:
+ 222:main.c        ****     }
+ 223:main.c        ****     else if (sp_vect>5)
+ 340               		.loc 1 223 0
+ 341 016c 8630      		cpi r24,6
+ 342 016e 9105      		cpc r25,__zero_reg__
+ 343 0170 A105      		cpc r26,__zero_reg__
+ 344 0172 B105      		cpc r27,__zero_reg__
+ 345 0174 04F0      		brlt .L20
+ 224:main.c        ****     {
+ 225:main.c        ****         PORTK&=(~(1<<PK3));
+ 346               		.loc 1 225 0
+ 347 0176 2091 0801 		lds r18,264
+ 348 017a 277F      		andi r18,lo8(-9)
+ 349 017c 2093 0801 		sts 264,r18
+ 226:main.c        ****         PORTK|=(1<<PK2);
+ 350               		.loc 1 226 0
+ 351 0180 2091 0801 		lds r18,264
+ 352 0184 2460      		ori r18,lo8(4)
+ 353 0186 2093 0801 		sts 264,r18
+ 354 018a 00C0      		rjmp .L19
+ 355               	.L20:
+ 227:main.c        ****     }
+ 228:main.c        ****     else
+ 229:main.c        ****     {
+ 230:main.c        ****         PORTK &= ~(1<<PK2);
+ 356               		.loc 1 230 0
+ 357 018c 8091 0801 		lds r24,264
+ 358               	.LVL21:
+ 359 0190 8B7F      		andi r24,lo8(-5)
+ 360 0192 8093 0801 		sts 264,r24
+ 231:main.c        ****         PORTK &= ~(1<<PK3);
+ 361               		.loc 1 231 0
+ 362 0196 8091 0801 		lds r24,264
+ 363 019a 877F      		andi r24,lo8(-9)
+ 364 019c 8093 0801 		sts 264,r24
+ 365               	.LVL22:
+ 232:main.c        ****         sp_vect=0;
+ 366               		.loc 1 232 0
+ 367 01a0 80E0      		ldi r24,0
+ 368 01a2 90E0      		ldi r25,0
+ 369 01a4 DC01      		movw r26,r24
+ 370               	.LVL23:
+ 371               	.L19:
+ 233:main.c        ****     }
+ 234:main.c        ****     OCR4B = sp_vect;
+ 372               		.loc 1 234 0
+ 373 01a6 9093 AB00 		sts 170+1,r25
+ 374 01aa 8093 AA00 		sts 170,r24
+ 375               	/* epilogue start */
+ 235:main.c        **** }
+ 376               		.loc 1 235 0
+ 377 01ae 1F91      		pop r17
+ 378 01b0 0F91      		pop r16
+ 379 01b2 FF90      		pop r15
+ 380 01b4 EF90      		pop r14
+ 381               	.LVL24:
+ 382 01b6 0895      		ret
+ 383               		.cfi_endproc
+ 384               	.LFE15:
+ 386               	.global	receive
+ 388               	receive:
+ 389               	.LFB16:
+ 236:main.c        **** 
+ 237:main.c        **** void receive(void)
+ 238:main.c        **** {
+ 390               		.loc 1 238 0
+ 391               		.cfi_startproc
+ 392               	/* prologue: function */
+ 393               	/* frame size = 0 */
+ 394               	/* stack size = 0 */
+ 395               	.L__stack_usage = 0
+ 239:main.c        ****     if ((RX_raw>200) && (RX_raw<255))
+ 396               		.loc 1 239 0
+ 397 01b8 8091 0000 		lds r24,RX_raw
+ 398 01bc 97E3      		ldi r25,lo8(55)
+ 399 01be 980F      		add r25,r24
+ 400 01c0 9633      		cpi r25,lo8(54)
+ 401 01c2 00F4      		brsh .L23
+ 240:main.c        ****     {
+ 241:main.c        ****         RX_ad1=RX_raw;
+ 402               		.loc 1 241 0
+ 403 01c4 8093 0000 		sts RX_ad1,r24
+ 242:main.c        ****         if ((RX_raw>230) && (RX_raw<247))
+ 404               		.loc 1 242 0
+ 405 01c8 875E      		subi r24,lo8(-(25))
+ 406 01ca 8031      		cpi r24,lo8(16)
+ 407 01cc 00F4      		brsh .L22
+ 408               	.LVL25:
+ 409               	.LBB14:
+ 243:main.c        ****         {
+ 244:main.c        ****             uint8_t r_temp0=(RX_raw-231);
+ 245:main.c        ****             butt[r_temp0]=1;
+ 410               		.loc 1 245 0
+ 411 01ce E82F      		mov r30,r24
+ 412 01d0 F0E0      		ldi r31,0
+ 413 01d2 E050      		subi r30,lo8(-(butt))
+ 414 01d4 F040      		sbci r31,hi8(-(butt))
+ 415 01d6 81E0      		ldi r24,lo8(1)
+ 416               	.LVL26:
+ 417 01d8 00C0      		rjmp .L27
+ 418               	.LVL27:
+ 419               	.L23:
+ 420               	.LBE14:
+ 246:main.c        ****         }
+ 247:main.c        ****     }
+ 248:main.c        ****     else if ((RX_raw>=0) && (RX_raw<201))
+ 421               		.loc 1 248 0
+ 422 01da 893C      		cpi r24,lo8(-55)
+ 423 01dc 00F4      		brsh .L22
+ 424               	.LBB15:
+ 249:main.c        ****     {
+ 250:main.c        ****         uint8_t r_temp1=(RX_ad1-201);
+ 425               		.loc 1 250 0
+ 426 01de E091 0000 		lds r30,RX_ad1
+ 427 01e2 E95C      		subi r30,lo8(-(55))
+ 428               	.LVL28:
+ 251:main.c        ****         if (r_temp1<16)
+ 429               		.loc 1 251 0
+ 430 01e4 E031      		cpi r30,lo8(16)
+ 431 01e6 00F4      		brsh .L22
+ 252:main.c        ****         {
+ 253:main.c        ****             RX[r_temp1]=RX_raw;
+ 432               		.loc 1 253 0
+ 433 01e8 F0E0      		ldi r31,0
+ 434 01ea E050      		subi r30,lo8(-(RX))
+ 435 01ec F040      		sbci r31,hi8(-(RX))
+ 436               	.LVL29:
+ 437               	.L27:
+ 438 01ee 8083      		st Z,r24
+ 439               	.L22:
+ 440 01f0 0895      		ret
+ 441               	.LBE15:
+ 442               		.cfi_endproc
+ 443               	.LFE16:
+ 445               	.global	__vector_54
+ 447               	__vector_54:
+ 448               	.LFB17:
+ 254:main.c        ****         }
+ 255:main.c        ****     }
+ 256:main.c        **** }
+ 257:main.c        **** 
+ 258:main.c        **** ISR(USART3_RX_vect)
+ 259:main.c        **** {
+ 449               		.loc 1 259 0
+ 450               		.cfi_startproc
+ 451 01f2 1F92      		push r1
+ 452               	.LCFI12:
+ 453               		.cfi_def_cfa_offset 4
+ 454               		.cfi_offset 1, -3
+ 455 01f4 0F92      		push r0
+ 456               	.LCFI13:
+ 457               		.cfi_def_cfa_offset 5
+ 458               		.cfi_offset 0, -4
+ 459 01f6 0FB6      		in r0,__SREG__
+ 460 01f8 0F92      		push r0
+ 461 01fa 1124      		clr __zero_reg__
+ 462 01fc 0BB6      		in r0,__RAMPZ__
+ 463 01fe 0F92      		push r0
+ 464 0200 2F93      		push r18
+ 465               	.LCFI14:
+ 466               		.cfi_def_cfa_offset 6
+ 467               		.cfi_offset 18, -5
+ 468 0202 3F93      		push r19
+ 469               	.LCFI15:
+ 470               		.cfi_def_cfa_offset 7
+ 471               		.cfi_offset 19, -6
+ 472 0204 4F93      		push r20
+ 473               	.LCFI16:
+ 474               		.cfi_def_cfa_offset 8
+ 475               		.cfi_offset 20, -7
+ 476 0206 5F93      		push r21
+ 477               	.LCFI17:
+ 478               		.cfi_def_cfa_offset 9
+ 479               		.cfi_offset 21, -8
+ 480 0208 6F93      		push r22
+ 481               	.LCFI18:
+ 482               		.cfi_def_cfa_offset 10
+ 483               		.cfi_offset 22, -9
+ 484 020a 7F93      		push r23
+ 485               	.LCFI19:
+ 486               		.cfi_def_cfa_offset 11
+ 487               		.cfi_offset 23, -10
+ 488 020c 8F93      		push r24
+ 489               	.LCFI20:
+ 490               		.cfi_def_cfa_offset 12
+ 491               		.cfi_offset 24, -11
+ 492 020e 9F93      		push r25
+ 493               	.LCFI21:
+ 494               		.cfi_def_cfa_offset 13
+ 495               		.cfi_offset 25, -12
+ 496 0210 AF93      		push r26
+ 497               	.LCFI22:
+ 498               		.cfi_def_cfa_offset 14
+ 499               		.cfi_offset 26, -13
+ 500 0212 BF93      		push r27
+ 501               	.LCFI23:
+ 502               		.cfi_def_cfa_offset 15
+ 503               		.cfi_offset 27, -14
+ 504 0214 EF93      		push r30
+ 505               	.LCFI24:
+ 506               		.cfi_def_cfa_offset 16
+ 507               		.cfi_offset 30, -15
+ 508 0216 FF93      		push r31
+ 509               	.LCFI25:
+ 510               		.cfi_def_cfa_offset 17
+ 511               		.cfi_offset 31, -16
+ 512               	/* prologue: Signal */
+ 513               	/* frame size = 0 */
+ 514               	/* stack size = 16 */
+ 515               	.L__stack_usage = 16
+ 260:main.c        ****     RX_raw=UDR3;
+ 516               		.loc 1 260 0
+ 517 0218 8091 3601 		lds r24,310
+ 518 021c 8093 0000 		sts RX_raw,r24
+ 261:main.c        ****     receive();
+ 519               		.loc 1 261 0
+ 520 0220 0E94 0000 		call receive
+ 521               	.LVL30:
+ 522               	/* epilogue start */
+ 262:main.c        **** }
+ 523               		.loc 1 262 0
+ 524 0224 FF91      		pop r31
+ 525 0226 EF91      		pop r30
+ 526 0228 BF91      		pop r27
+ 527 022a AF91      		pop r26
+ 528 022c 9F91      		pop r25
+ 529 022e 8F91      		pop r24
+ 530 0230 7F91      		pop r23
+ 531 0232 6F91      		pop r22
+ 532 0234 5F91      		pop r21
+ 533 0236 4F91      		pop r20
+ 534 0238 3F91      		pop r19
+ 535 023a 2F91      		pop r18
+ 536 023c 0F90      		pop r0
+ 537 023e 0BBE      		out __RAMPZ__,r0
+ 538 0240 0F90      		pop r0
+ 539 0242 0FBE      		out __SREG__,r0
+ 540 0244 0F90      		pop r0
+ 541 0246 1F90      		pop r1
+ 542 0248 1895      		reti
+ 543               		.cfi_endproc
+ 544               	.LFE17:
+ 546               	.global	usart_init
+ 548               	usart_init:
+ 549               	.LFB18:
+ 263:main.c        **** 
+ 264:main.c        **** void usart_init(void)
+ 265:main.c        **** {
+ 550               		.loc 1 265 0
+ 551               		.cfi_startproc
+ 552               	/* prologue: function */
+ 553               	/* frame size = 0 */
+ 554               	/* stack size = 0 */
+ 555               	.L__stack_usage = 0
+ 266:main.c        ****     UBRR3H=BAUDRATE>>8;
+ 556               		.loc 1 266 0
+ 557 024a 1092 3501 		sts 309,__zero_reg__
+ 267:main.c        ****     UBRR3L=BAUDRATE;
+ 558               		.loc 1 267 0
+ 559 024e 8FE5      		ldi r24,lo8(95)
+ 560 0250 8093 3401 		sts 308,r24
+ 268:main.c        ****     UCSR3B=0b10011000;//enable RXEN TXEN
+ 561               		.loc 1 268 0
+ 562 0254 88E9      		ldi r24,lo8(-104)
+ 563 0256 8093 3101 		sts 305,r24
+ 269:main.c        ****     UCSR3C=0b00000110;// UCSZ1 UCSZ0
+ 564               		.loc 1 269 0
+ 565 025a 86E0      		ldi r24,lo8(6)
+ 566 025c 8093 3201 		sts 306,r24
+ 567 0260 0895      		ret
+ 568               		.cfi_endproc
+ 569               	.LFE18:
+ 571               	.global	map_value
+ 573               	map_value:
+ 574               	.LFB19:
+ 270:main.c        **** }
+ 271:main.c        **** 
+ 272:main.c        **** long map_value(long in_value, long in_min, long in_max, long out_min, long out_max)
+ 273:main.c        **** {
+ 575               		.loc 1 273 0
+ 576               		.cfi_startproc
+ 577               	.LVL31:
+ 578 0262 4F92      		push r4
+ 579               	.LCFI26:
+ 580               		.cfi_def_cfa_offset 4
+ 581               		.cfi_offset 4, -3
+ 582 0264 5F92      		push r5
+ 583               	.LCFI27:
+ 584               		.cfi_def_cfa_offset 5
+ 585               		.cfi_offset 5, -4
+ 586 0266 6F92      		push r6
+ 587               	.LCFI28:
+ 588               		.cfi_def_cfa_offset 6
+ 589               		.cfi_offset 6, -5
+ 590 0268 7F92      		push r7
+ 591               	.LCFI29:
+ 592               		.cfi_def_cfa_offset 7
+ 593               		.cfi_offset 7, -6
+ 594 026a AF92      		push r10
+ 595               	.LCFI30:
+ 596               		.cfi_def_cfa_offset 8
+ 597               		.cfi_offset 10, -7
+ 598 026c BF92      		push r11
+ 599               	.LCFI31:
+ 600               		.cfi_def_cfa_offset 9
+ 601               		.cfi_offset 11, -8
+ 602 026e CF92      		push r12
+ 603               	.LCFI32:
+ 604               		.cfi_def_cfa_offset 10
+ 605               		.cfi_offset 12, -9
+ 606 0270 DF92      		push r13
+ 607               	.LCFI33:
+ 608               		.cfi_def_cfa_offset 11
+ 609               		.cfi_offset 13, -10
+ 610 0272 EF92      		push r14
+ 611               	.LCFI34:
+ 612               		.cfi_def_cfa_offset 12
+ 613               		.cfi_offset 14, -11
+ 614 0274 FF92      		push r15
+ 615               	.LCFI35:
+ 616               		.cfi_def_cfa_offset 13
+ 617               		.cfi_offset 15, -12
+ 618 0276 0F93      		push r16
+ 619               	.LCFI36:
+ 620               		.cfi_def_cfa_offset 14
+ 621               		.cfi_offset 16, -13
+ 622 0278 1F93      		push r17
+ 623               	.LCFI37:
+ 624               		.cfi_def_cfa_offset 15
+ 625               		.cfi_offset 17, -14
+ 626 027a CF93      		push r28
+ 627               	.LCFI38:
+ 628               		.cfi_def_cfa_offset 16
+ 629               		.cfi_offset 28, -15
+ 630 027c DF93      		push r29
+ 631               	.LCFI39:
+ 632               		.cfi_def_cfa_offset 17
+ 633               		.cfi_offset 29, -16
+ 634 027e CDB7      		in r28,__SP_L__
+ 635 0280 DEB7      		in r29,__SP_H__
+ 636               	.LCFI40:
+ 637               		.cfi_def_cfa_register 28
+ 638               	/* prologue: function */
+ 639               	/* frame size = 0 */
+ 640               	/* stack size = 14 */
+ 641               	.L__stack_usage = 14
+ 642 0282 2901      		movw r4,r18
+ 643 0284 3A01      		movw r6,r20
+ 274:main.c        ****     return (in_value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+ 644               		.loc 1 274 0
+ 645 0286 621B      		sub r22,r18
+ 646 0288 730B      		sbc r23,r19
+ 647 028a 840B      		sbc r24,r20
+ 648 028c 950B      		sbc r25,r21
+ 649               	.LVL32:
+ 650 028e 2A89      		ldd r18,Y+18
+ 651 0290 3B89      		ldd r19,Y+19
+ 652 0292 4C89      		ldd r20,Y+20
+ 653 0294 5D89      		ldd r21,Y+21
+ 654               	.LVL33:
+ 655 0296 2A19      		sub r18,r10
+ 656 0298 3B09      		sbc r19,r11
+ 657 029a 4C09      		sbc r20,r12
+ 658 029c 5D09      		sbc r21,r13
+ 659 029e 2A8B      		std Y+18,r18
+ 660 02a0 3B8B      		std Y+19,r19
+ 661 02a2 4C8B      		std Y+20,r20
+ 662 02a4 5D8B      		std Y+21,r21
+ 663               	.LVL34:
+ 664 02a6 9B01      		movw r18,r22
+ 665 02a8 AC01      		movw r20,r24
+ 666 02aa 6A89      		ldd r22,Y+18
+ 667 02ac 7B89      		ldd r23,Y+19
+ 668 02ae 8C89      		ldd r24,Y+20
+ 669 02b0 9D89      		ldd r25,Y+21
+ 670 02b2 0E94 0000 		call __mulsi3
+ 671 02b6 E418      		sub r14,r4
+ 672 02b8 F508      		sbc r15,r5
+ 673 02ba 0609      		sbc r16,r6
+ 674 02bc 1709      		sbc r17,r7
+ 675               	.LVL35:
+ 676 02be A801      		movw r20,r16
+ 677 02c0 9701      		movw r18,r14
+ 678 02c2 0E94 0000 		call __divmodsi4
+ 679 02c6 2A0D      		add r18,r10
+ 680 02c8 3B1D      		adc r19,r11
+ 681 02ca 4C1D      		adc r20,r12
+ 682 02cc 5D1D      		adc r21,r13
+ 275:main.c        **** }
+ 683               		.loc 1 275 0
+ 684 02ce CA01      		movw r24,r20
+ 685 02d0 B901      		movw r22,r18
+ 686               	/* epilogue start */
+ 687 02d2 DF91      		pop r29
+ 688 02d4 CF91      		pop r28
+ 689 02d6 1F91      		pop r17
+ 690 02d8 0F91      		pop r16
+ 691 02da FF90      		pop r15
+ 692 02dc EF90      		pop r14
+ 693 02de DF90      		pop r13
+ 694 02e0 CF90      		pop r12
+ 695 02e2 BF90      		pop r11
+ 696 02e4 AF90      		pop r10
+ 697               	.LVL36:
+ 698 02e6 7F90      		pop r7
+ 699 02e8 6F90      		pop r6
+ 700 02ea 5F90      		pop r5
+ 701 02ec 4F90      		pop r4
+ 702               	.LVL37:
+ 703 02ee 0895      		ret
+ 704               		.cfi_endproc
+ 705               	.LFE19:
+ 707               	.global	ps2_values
+ 709               	ps2_values:
+ 710               	.LFB20:
+ 276:main.c        **** 
+ 277:main.c        **** void ps2_values(void)
+ 278:main.c        **** {
+ 711               		.loc 1 278 0
+ 712               		.cfi_startproc
+ 713               	/* prologue: function */
+ 714               	/* frame size = 0 */
+ 715               	/* stack size = 0 */
+ 716               	.L__stack_usage = 0
+ 279:main.c        **** //    xj1=map_value(RX[0],0,RX_range,(pwm_range),(-pwm_range));
+ 280:main.c        **** //    yj1=map_value(RX[1],0,RX_range,(pwm_range),(-pwm_range));
+ 281:main.c        **** //    xj2=map_value(RX[2],0,RX_range,(pwm_range),(-pwm_range));
+ 282:main.c        **** //    yj2=map_value(RX[3],0,RX_range,(pwm_range),(-pwm_range));
+ 283:main.c        ****     if (butt[0]==1)//l1
+ 717               		.loc 1 283 0
+ 718 02f0 9091 0000 		lds r25,butt
+ 719 02f4 9130      		cpi r25,lo8(1)
+ 720 02f6 01F4      		brne .L32
+ 284:main.c        ****     {
+ 285:main.c        ****         i ^=1;
+ 721               		.loc 1 285 0
+ 722 02f8 8091 0000 		lds r24,i
+ 723 02fc 8927      		eor r24,r25
+ 724 02fe 8093 0000 		sts i,r24
+ 286:main.c        ****         butt[0] = 0;
+ 725               		.loc 1 286 0
+ 726 0302 1092 0000 		sts butt,__zero_reg__
+ 727               	.L32:
+ 287:main.c        ****     }
+ 288:main.c        ****     if (butt[1]==1)//r1
+ 728               		.loc 1 288 0
+ 729 0306 9091 0000 		lds r25,butt+1
+ 730 030a 9130      		cpi r25,lo8(1)
+ 731 030c 01F4      		brne .L33
+ 289:main.c        ****     {
+ 290:main.c        ****         i ^=1;
+ 732               		.loc 1 290 0
+ 733 030e 8091 0000 		lds r24,i
+ 734 0312 8927      		eor r24,r25
+ 735 0314 8093 0000 		sts i,r24
+ 291:main.c        ****         butt[1] = 0;
+ 736               		.loc 1 291 0
+ 737 0318 1092 0000 		sts butt+1,__zero_reg__
+ 738               	.L33:
+ 292:main.c        ****     }
+ 293:main.c        ****     if (butt[2]==1)//l2
+ 739               		.loc 1 293 0
+ 740 031c 9091 0000 		lds r25,butt+2
+ 741 0320 9130      		cpi r25,lo8(1)
+ 742 0322 01F4      		brne .L34
+ 294:main.c        ****     {
+ 295:main.c        ****         i ^=1;
+ 743               		.loc 1 295 0
+ 744 0324 8091 0000 		lds r24,i
+ 745 0328 8927      		eor r24,r25
+ 746 032a 8093 0000 		sts i,r24
+ 296:main.c        ****         butt[2] = 0;
+ 747               		.loc 1 296 0
+ 748 032e 1092 0000 		sts butt+2,__zero_reg__
+ 749               	.L34:
+ 297:main.c        ****     }
+ 298:main.c        ****     if (butt[3]==1)//r2
+ 750               		.loc 1 298 0
+ 751 0332 9091 0000 		lds r25,butt+3
+ 752 0336 9130      		cpi r25,lo8(1)
+ 753 0338 01F4      		brne .L35
+ 299:main.c        ****     {
+ 300:main.c        ****         i ^=1;
+ 754               		.loc 1 300 0
+ 755 033a 8091 0000 		lds r24,i
+ 756 033e 8927      		eor r24,r25
+ 757 0340 8093 0000 		sts i,r24
+ 301:main.c        ****         butt[3] = 0;
+ 758               		.loc 1 301 0
+ 759 0344 1092 0000 		sts butt+3,__zero_reg__
+ 760               	.L35:
+ 302:main.c        ****     }
+ 303:main.c        ****     if (butt[4]==1)//l3
+ 761               		.loc 1 303 0
+ 762 0348 9091 0000 		lds r25,butt+4
+ 763 034c 9130      		cpi r25,lo8(1)
+ 764 034e 01F4      		brne .L36
+ 304:main.c        ****     {
+ 305:main.c        ****         i ^=1;
+ 765               		.loc 1 305 0
+ 766 0350 8091 0000 		lds r24,i
+ 767 0354 8927      		eor r24,r25
+ 768 0356 8093 0000 		sts i,r24
+ 306:main.c        ****         butt[4] = 0;
+ 769               		.loc 1 306 0
+ 770 035a 1092 0000 		sts butt+4,__zero_reg__
+ 771               	.L36:
+ 307:main.c        ****     }
+ 308:main.c        ****     if (butt[5]==1)//r3
+ 772               		.loc 1 308 0
+ 773 035e 9091 0000 		lds r25,butt+5
+ 774 0362 9130      		cpi r25,lo8(1)
+ 775 0364 01F4      		brne .L37
+ 309:main.c        ****     {
+ 310:main.c        ****         i ^=1;
+ 776               		.loc 1 310 0
+ 777 0366 8091 0000 		lds r24,i
+ 778 036a 8927      		eor r24,r25
+ 779 036c 8093 0000 		sts i,r24
+ 311:main.c        ****         butt[5] = 0;
+ 780               		.loc 1 311 0
+ 781 0370 1092 0000 		sts butt+5,__zero_reg__
+ 782               	.L37:
+ 312:main.c        ****     }
+ 313:main.c        ****     if (butt[6]==1)//triangle
+ 783               		.loc 1 313 0
+ 784 0374 9091 0000 		lds r25,butt+6
+ 785 0378 9130      		cpi r25,lo8(1)
+ 786 037a 01F4      		brne .L38
+ 314:main.c        ****     {
+ 315:main.c        ****         i ^=1;
+ 787               		.loc 1 315 0
+ 788 037c 8091 0000 		lds r24,i
+ 789 0380 8927      		eor r24,r25
+ 790 0382 8093 0000 		sts i,r24
+ 316:main.c        ****         butt[6] = 0;
+ 791               		.loc 1 316 0
+ 792 0386 1092 0000 		sts butt+6,__zero_reg__
+ 793               	.L38:
+ 317:main.c        ****     }
+ 318:main.c        ****     if (butt[7]==1)//square
+ 794               		.loc 1 318 0
+ 795 038a 9091 0000 		lds r25,butt+7
+ 796 038e 9130      		cpi r25,lo8(1)
+ 797 0390 01F4      		brne .L39
+ 319:main.c        ****     {
+ 320:main.c        ****         i ^=1;
+ 798               		.loc 1 320 0
+ 799 0392 8091 0000 		lds r24,i
+ 800 0396 8927      		eor r24,r25
+ 801 0398 8093 0000 		sts i,r24
+ 321:main.c        ****         butt[7] = 0;
+ 802               		.loc 1 321 0
+ 803 039c 1092 0000 		sts butt+7,__zero_reg__
+ 804               	.L39:
+ 322:main.c        ****     }
+ 323:main.c        ****     if (butt[8]==1)//cross
+ 805               		.loc 1 323 0
+ 806 03a0 9091 0000 		lds r25,butt+8
+ 807 03a4 9130      		cpi r25,lo8(1)
+ 808 03a6 01F4      		brne .L40
+ 324:main.c        ****     {
+ 325:main.c        ****         i ^=1;
+ 809               		.loc 1 325 0
+ 810 03a8 8091 0000 		lds r24,i
+ 811 03ac 8927      		eor r24,r25
+ 812 03ae 8093 0000 		sts i,r24
+ 326:main.c        ****         butt[8] = 0;
+ 813               		.loc 1 326 0
+ 814 03b2 1092 0000 		sts butt+8,__zero_reg__
+ 815               	.L40:
+ 327:main.c        ****     }
+ 328:main.c        ****     if (butt[9]==1)//circle
+ 816               		.loc 1 328 0
+ 817 03b6 8091 0000 		lds r24,butt+9
+ 818 03ba 8130      		cpi r24,lo8(1)
+ 819 03bc 01F4      		brne .L41
+ 329:main.c        ****     {
+ 330:main.c        ****         butt[9] = 0;
+ 820               		.loc 1 330 0
+ 821 03be 1092 0000 		sts butt+9,__zero_reg__
+ 822               	.L41:
+ 331:main.c        ****     }
+ 332:main.c        ****     if (butt[10]==1)//up
+ 823               		.loc 1 332 0
+ 824 03c2 8091 0000 		lds r24,butt+10
+ 825 03c6 8130      		cpi r24,lo8(1)
+ 826 03c8 01F4      		brne .L42
+ 333:main.c        ****     {
+ 334:main.c        ****         speed1 += 10;
+ 827               		.loc 1 334 0
+ 828 03ca 8091 0000 		lds r24,speed1
+ 829 03ce 9091 0000 		lds r25,speed1+1
+ 830 03d2 0A96      		adiw r24,10
+ 831 03d4 9093 0000 		sts speed1+1,r25
+ 832 03d8 8093 0000 		sts speed1,r24
+ 335:main.c        ****         butt[10] = 0;
+ 833               		.loc 1 335 0
+ 834 03dc 1092 0000 		sts butt+10,__zero_reg__
+ 835               	.L42:
+ 336:main.c        ****     }
+ 337:main.c        ****     if (butt[11]==1)//left
+ 836               		.loc 1 337 0
+ 837 03e0 8091 0000 		lds r24,butt+11
+ 838 03e4 8130      		cpi r24,lo8(1)
+ 839 03e6 01F4      		brne .L43
+ 338:main.c        ****     {
+ 339:main.c        ****         speed2 += 10;
+ 840               		.loc 1 339 0
+ 841 03e8 8091 0000 		lds r24,speed2
+ 842 03ec 9091 0000 		lds r25,speed2+1
+ 843 03f0 0A96      		adiw r24,10
+ 844 03f2 9093 0000 		sts speed2+1,r25
+ 845 03f6 8093 0000 		sts speed2,r24
+ 340:main.c        ****         butt[11] = 0;
+ 846               		.loc 1 340 0
+ 847 03fa 1092 0000 		sts butt+11,__zero_reg__
+ 848               	.L43:
+ 341:main.c        ****     }
+ 342:main.c        ****     if (butt[12]==1)//down
+ 849               		.loc 1 342 0
+ 850 03fe 8091 0000 		lds r24,butt+12
+ 851 0402 8130      		cpi r24,lo8(1)
+ 852 0404 01F4      		brne .L44
+ 343:main.c        ****     {
+ 344:main.c        ****         speed1 -= 10;
+ 853               		.loc 1 344 0
+ 854 0406 8091 0000 		lds r24,speed1
+ 855 040a 9091 0000 		lds r25,speed1+1
+ 856 040e 0A97      		sbiw r24,10
+ 857 0410 9093 0000 		sts speed1+1,r25
+ 858 0414 8093 0000 		sts speed1,r24
+ 345:main.c        ****         butt[12] = 0;
+ 859               		.loc 1 345 0
+ 860 0418 1092 0000 		sts butt+12,__zero_reg__
+ 861               	.L44:
+ 346:main.c        ****     }
+ 347:main.c        ****     if (butt[13]==1)//right
+ 862               		.loc 1 347 0
+ 863 041c 8091 0000 		lds r24,butt+13
+ 864 0420 8130      		cpi r24,lo8(1)
+ 865 0422 01F4      		brne .L45
+ 348:main.c        ****     {
+ 349:main.c        ****         speed2 -= 10;
+ 866               		.loc 1 349 0
+ 867 0424 8091 0000 		lds r24,speed2
+ 868 0428 9091 0000 		lds r25,speed2+1
+ 869 042c 0A97      		sbiw r24,10
+ 870 042e 9093 0000 		sts speed2+1,r25
+ 871 0432 8093 0000 		sts speed2,r24
+ 350:main.c        ****         butt[13] = 0;
+ 872               		.loc 1 350 0
+ 873 0436 1092 0000 		sts butt+13,__zero_reg__
+ 874               	.L45:
+ 351:main.c        ****     }
+ 352:main.c        ****     if (butt[14]==1)//start
+ 875               		.loc 1 352 0
+ 876 043a 9091 0000 		lds r25,butt+14
+ 877 043e 9130      		cpi r25,lo8(1)
+ 878 0440 01F4      		brne .L46
+ 353:main.c        ****     {
+ 354:main.c        ****         start ^= 1;
+ 879               		.loc 1 354 0
+ 880 0442 8091 0000 		lds r24,start
+ 881 0446 8927      		eor r24,r25
+ 882 0448 8093 0000 		sts start,r24
+ 355:main.c        ****         butt[14] = 0;
+ 883               		.loc 1 355 0
+ 884 044c 1092 0000 		sts butt+14,__zero_reg__
+ 885               	.L46:
+ 356:main.c        ****     }
+ 357:main.c        ****     if (butt[15]==1)//select
+ 886               		.loc 1 357 0
+ 887 0450 8091 0000 		lds r24,butt+15
+ 888 0454 8130      		cpi r24,lo8(1)
+ 889 0456 01F4      		brne .L31
+ 358:main.c        ****     {
+ 359:main.c        ****         butt[15] = 0;
+ 890               		.loc 1 359 0
+ 891 0458 1092 0000 		sts butt+15,__zero_reg__
+ 892               	.L31:
+ 893 045c 0895      		ret
+ 894               		.cfi_endproc
+ 895               	.LFE20:
+ 897               	.global	walking
+ 899               	walking:
+ 900               	.LFB21:
+ 360:main.c        ****     }
+ 361:main.c        **** }
+ 362:main.c        **** 
+ 363:main.c        **** void walking(void)
+ 364:main.c        **** {
+ 901               		.loc 1 364 0
+ 902               		.cfi_startproc
+ 903 045e EF92      		push r14
+ 904               	.LCFI41:
+ 905               		.cfi_def_cfa_offset 4
+ 906               		.cfi_offset 14, -3
+ 907 0460 FF92      		push r15
+ 908               	.LCFI42:
+ 909               		.cfi_def_cfa_offset 5
+ 910               		.cfi_offset 15, -4
+ 911 0462 0F93      		push r16
+ 912               	.LCFI43:
+ 913               		.cfi_def_cfa_offset 6
+ 914               		.cfi_offset 16, -5
+ 915 0464 1F93      		push r17
+ 916               	.LCFI44:
+ 917               		.cfi_def_cfa_offset 7
+ 918               		.cfi_offset 17, -6
+ 919               	/* prologue: function */
+ 920               	/* frame size = 0 */
+ 921               	/* stack size = 4 */
+ 922               	.L__stack_usage = 4
+ 365:main.c        ****     if(i)
+ 923               		.loc 1 365 0
+ 924 0466 8091 0000 		lds r24,i
+ 925 046a 8823      		tst r24
+ 926 046c 01F4      		brne .+2
+ 927 046e 00C0      		rjmp .L49
+ 366:main.c        ****     {
+ 367:main.c        ****         if(counter)
+ 928               		.loc 1 367 0
+ 929 0470 9091 0000 		lds r25,counter
+ 930 0474 8091 0000 		lds r24,check
+ 931 0478 9923      		tst r25
+ 932 047a 01F4      		brne .+2
+ 933 047c 00C0      		rjmp .L50
+ 368:main.c        ****         {
+ 369:main.c        ****                 if(check)
+ 934               		.loc 1 369 0
+ 935 047e 8823      		tst r24
+ 936 0480 01F0      		breq .L51
+ 370:main.c        ****                 {
+ 371:main.c        ****                     drivewheel_1(0,-255,255);
+ 937               		.loc 1 371 0
+ 938 0482 E12C      		mov r14,__zero_reg__
+ 939 0484 F12C      		mov r15,__zero_reg__
+ 940 0486 8701      		movw r16,r14
+ 941 0488 EA94      		dec r14
+ 942 048a 21E0      		ldi r18,lo8(1)
+ 943 048c 3FEF      		ldi r19,lo8(-1)
+ 944 048e 4FEF      		ldi r20,lo8(-1)
+ 945 0490 5FEF      		ldi r21,lo8(-1)
+ 946 0492 60E0      		ldi r22,0
+ 947 0494 70E0      		ldi r23,0
+ 948 0496 CB01      		movw r24,r22
+ 949 0498 0E94 0000 		call drivewheel_1
+ 950               	.LVL38:
+ 372:main.c        ****                     drivewheel_2(0,-255,255);
+ 951               		.loc 1 372 0
+ 952 049c 21E0      		ldi r18,lo8(1)
+ 953 049e 3FEF      		ldi r19,lo8(-1)
+ 954 04a0 4FEF      		ldi r20,lo8(-1)
+ 955 04a2 5FEF      		ldi r21,lo8(-1)
+ 956 04a4 60E0      		ldi r22,0
+ 957 04a6 70E0      		ldi r23,0
+ 958 04a8 CB01      		movw r24,r22
+ 959 04aa 0E94 0000 		call drivewheel_2
+ 960               	.LVL39:
+ 961               	.LBB16:
+ 962               	.LBB17:
+ 963               		.file 2 "/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h"
+   1:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** /* Copyright (c) 2002, Marek Michalkiewicz
+   2:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Copyright (c) 2004,2005,2007 Joerg Wunsch
+   3:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Copyright (c) 2007  Florin-Viorel Petrov
+   4:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    All rights reserved.
+   5:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+   6:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Redistribution and use in source and binary forms, with or without
+   7:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    modification, are permitted provided that the following conditions are met:
+   8:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+   9:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    * Redistributions of source code must retain the above copyright
+  10:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer.
+  11:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  12:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    * Redistributions in binary form must reproduce the above copyright
+  13:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer in
+  14:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****      the documentation and/or other materials provided with the
+  15:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****      distribution.
+  16:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  17:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    * Neither the name of the copyright holders nor the names of
+  18:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****      contributors may be used to endorse or promote products derived
+  19:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****      from this software without specific prior written permission.
+  20:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  21:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  22:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  23:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  24:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  25:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  26:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  27:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  28:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  29:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  30:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  31:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   POSSIBILITY OF SUCH DAMAGE. */
+  32:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  33:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** /* $Id$ */
+  34:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  35:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #ifndef _UTIL_DELAY_H_
+  36:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #define _UTIL_DELAY_H_ 1
+  37:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  38:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #ifndef __HAS_DELAY_CYCLES
+  39:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #define __HAS_DELAY_CYCLES 1
+  40:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #endif
+  41:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  42:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #include <inttypes.h>
+  43:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #include <util/delay_basic.h>
+  44:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #include <math.h>
+  45:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  46:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** /** \file */
+  47:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** /** \defgroup util_delay <util/delay.h>: Convenience functions for busy-wait delay loops
+  48:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     \code
+  49:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     #define F_CPU 1000000UL  // 1 MHz
+  50:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     //#define F_CPU 14.7456E6
+  51:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     #include <util/delay.h>
+  52:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     \endcode
+  53:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  54:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     \note As an alternative method, it is possible to pass the
+  55:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     F_CPU macro down to the compiler from the Makefile.
+  56:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     Obviously, in that case, no \c \#define statement should be
+  57:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     used.
+  58:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  59:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     The functions in this header file are wrappers around the basic
+  60:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     busy-wait functions from <util/delay_basic.h>.  They are meant as
+  61:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     convenience functions where actual time values can be specified
+  62:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     rather than a number of cycles to wait for.  The idea behind is
+  63:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     that compile-time constant expressions will be eliminated by
+  64:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     compiler optimization so floating-point expressions can be used
+  65:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     to calculate the number of delay cycles needed based on the CPU
+  66:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     frequency passed by the macro F_CPU.
+  67:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  68:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     \note In order for these functions to work as intended, compiler
+  69:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     optimizations <em>must</em> be enabled, and the delay time
+  70:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     <em>must</em> be an expression that is a known constant at
+  71:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     compile-time.  If these requirements are not met, the resulting
+  72:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     delay will be much longer (and basically unpredictable), and
+  73:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     applications that otherwise do not use floating-point calculations
+  74:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     will experience severe code bloat by the floating-point library
+  75:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     routines linked into the application.
+  76:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  77:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     The functions available allow the specification of microsecond, and
+  78:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     millisecond delays directly, using the application-supplied macro
+  79:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     F_CPU as the CPU clock frequency (in Hertz).
+  80:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  81:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** */
+  82:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  83:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #if !defined(__DOXYGEN__)
+  84:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** static inline void _delay_us(double __us) __attribute__((always_inline));
+  85:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** static inline void _delay_ms(double __ms) __attribute__((always_inline));
+  86:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #endif
+  87:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  88:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #ifndef F_CPU
+  89:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** /* prevent compiler error by supplying a default */
+  90:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** # warning "F_CPU not defined for <util/delay.h>"
+  91:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** # define F_CPU 1000000UL
+  92:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #endif
+  93:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  94:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #ifndef __OPTIMIZE__
+  95:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** # warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+  96:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #endif
+  97:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+  98:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+  99:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 100:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   __STDC_HOSTED__
+ 101:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #  include <math.h>
+ 102:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #endif
+ 103:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 104:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** /**
+ 105:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    \ingroup util_delay
+ 106:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 107:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Perform a delay of \c __ms milliseconds, using _delay_loop_2().
+ 108:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 109:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    The macro F_CPU is supposed to be defined to a
+ 110:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 111:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 112:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    The maximal possible delay is 262.14 ms / F_CPU in MHz.
+ 113:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 114:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    When the user request delay which exceed the maximum possible one,
+ 115:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    _delay_ms() provides a decreased resolution functionality. In this
+ 116:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    mode _delay_ms() will work with a resolution of 1/10 ms, providing
+ 117:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    delays up to 6.5535 seconds (independent from CPU frequency).  The
+ 118:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    user will not be informed about decreased resolution.
+ 119:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 120:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles(unsigned long)
+ 121:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    support, maximal possible delay is 4294967.295 ms/ F_CPU in MHz. For
+ 122:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    values greater than the maximal possible delay, overflows results in
+ 123:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    no delay i.e., 0ms.
+ 124:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 125:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Conversion of __us into clock cycles may not always result in integer.
+ 126:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    By default, the clock cycles rounded up to next integer. This ensures that
+ 127:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    the user gets atleast __us microseconds of delay.
+ 128:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 129:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Alternatively, user can define __DELAY_ROUND_DOWN__ and __DELAY_ROUND_CLOSEST__
+ 130:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    to round down and round to closest integer.
+ 131:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 132:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Note: The new implementation of _delay_ms(double __ms) with 
+ 133:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****     __builtin_avr_delay_cycles(unsigned long) support is not backward compatible. 
+ 134:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    User can define __DELAY_BACKWARD_COMPATIBLE__ to get a backward compatible delay.
+ 135:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    Also, the backward compatible
+ 136:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    algorithm will be chosen if the code is compiled in a <em>freestanding
+ 137:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    environment</em> (GCC option \c -ffreestanding), as the math functions
+ 138:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****    required for rounding are not available to the compiler then.
+ 139:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 140:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****  */
+ 141:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** void
+ 142:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** _delay_ms(double __ms)
+ 143:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** {
+ 144:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	double __tmp ; 
+ 145:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 146:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 147:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h ****   __STDC_HOSTED__
+ 148:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	uint32_t __ticks_dc;
+ 149:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 150:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	__tmp = ((F_CPU) / 1e3) * __ms;
+ 151:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 152:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 153:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 154:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 155:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 156:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 157:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 158:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	#else
+ 159:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 		//round up by default
+ 160:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 161:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	#endif
+ 162:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 
+ 163:/usr/local/CrossPack-AVR-20131216/avr/include/util/delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+ 964               		.loc 2 163 0
+ 965 04ae 2FEF      		ldi r18,lo8(294911)
+ 966 04b0 8FE7      		ldi r24,hi8(294911)
+ 967 04b2 94E0      		ldi r25,hlo8(294911)
+ 968 04b4 2150      		1: subi r18,1
+ 969 04b6 8040      		sbci r24,0
+ 970 04b8 9040      		sbci r25,0
+ 971 04ba 01F4      		brne 1b
+ 972 04bc 00C0      		rjmp .
+ 973 04be 0000      		nop
+ 974               	.LBE17:
+ 975               	.LBE16:
+ 373:main.c        ****                     _delay_ms(100);
+ 374:main.c        ****                     check = 0;
+ 976               		.loc 1 374 0
+ 977 04c0 1092 0000 		sts check,__zero_reg__
+ 978               	.LVL40:
+ 979               	.L51:
+ 375:main.c        ****                 }
+ 376:main.c        ****                 drivewheel_1(-120,-255,255);
+ 980               		.loc 1 376 0
+ 981 04c4 E12C      		mov r14,__zero_reg__
+ 982 04c6 F12C      		mov r15,__zero_reg__
+ 983 04c8 8701      		movw r16,r14
+ 984 04ca EA94      		dec r14
+ 985 04cc 21E0      		ldi r18,lo8(1)
+ 986 04ce 3FEF      		ldi r19,lo8(-1)
+ 987 04d0 4FEF      		ldi r20,lo8(-1)
+ 988 04d2 5FEF      		ldi r21,lo8(-1)
+ 989 04d4 68E8      		ldi r22,lo8(-120)
+ 990 04d6 7FEF      		ldi r23,lo8(-1)
+ 991 04d8 8FEF      		ldi r24,lo8(-1)
+ 992 04da 9FEF      		ldi r25,lo8(-1)
+ 993 04dc 0E94 0000 		call drivewheel_1
+ 994               	.LVL41:
+ 377:main.c        ****                 drivewheel_2(120,-255,255);
+ 995               		.loc 1 377 0
+ 996 04e0 21E0      		ldi r18,lo8(1)
+ 997 04e2 3FEF      		ldi r19,lo8(-1)
+ 998 04e4 4FEF      		ldi r20,lo8(-1)
+ 999 04e6 5FEF      		ldi r21,lo8(-1)
+ 1000 04e8 68E7      		ldi r22,lo8(120)
+ 1001 04ea 70E0      		ldi r23,0
+ 1002 04ec 80E0      		ldi r24,0
+ 1003 04ee 90E0      		ldi r25,0
+ 1004 04f0 0E94 0000 		call drivewheel_2
+ 1005               	.LVL42:
+ 378:main.c        ****             if(countercw2 <=0 || countercw1 >=1000)
+ 1006               		.loc 1 378 0
+ 1007 04f4 8091 0000 		lds r24,countercw2
+ 1008 04f8 9091 0000 		lds r25,countercw2+1
+ 1009 04fc 1816      		cp __zero_reg__,r24
+ 1010 04fe 1906      		cpc __zero_reg__,r25
+ 1011 0500 04F4      		brge .L52
+ 1012               		.loc 1 378 0 is_stmt 0 discriminator 1
+ 1013 0502 8091 0000 		lds r24,countercw1
+ 1014 0506 9091 0000 		lds r25,countercw1+1
+ 1015 050a 883E      		cpi r24,-24
+ 1016 050c 9340      		sbci r25,3
+ 1017 050e 04F4      		brge .+2
+ 1018 0510 00C0      		rjmp .L48
+ 1019               	.L52:
+ 379:main.c        ****             {
+ 380:main.c        ****                 counter = 0;
+ 1020               		.loc 1 380 0 is_stmt 1
+ 1021 0512 1092 0000 		sts counter,__zero_reg__
+ 1022 0516 00C0      		rjmp .L48
+ 1023               	.L50:
+ 381:main.c        ****             }
+ 382:main.c        ****         }
+ 383:main.c        ****         else if(!counter)
+ 384:main.c        ****         {
+ 385:main.c        ****                 if(!check)
+ 1024               		.loc 1 385 0
+ 1025 0518 8111      		cpse r24,__zero_reg__
+ 1026 051a 00C0      		rjmp .L54
+ 386:main.c        ****                 {
+ 387:main.c        ****                     drivewheel_1(0,-255,255);
+ 1027               		.loc 1 387 0
+ 1028 051c E12C      		mov r14,__zero_reg__
+ 1029 051e F12C      		mov r15,__zero_reg__
+ 1030 0520 8701      		movw r16,r14
+ 1031 0522 EA94      		dec r14
+ 1032 0524 21E0      		ldi r18,lo8(1)
+ 1033 0526 3FEF      		ldi r19,lo8(-1)
+ 1034 0528 4FEF      		ldi r20,lo8(-1)
+ 1035 052a 5FEF      		ldi r21,lo8(-1)
+ 1036 052c 60E0      		ldi r22,0
+ 1037 052e 70E0      		ldi r23,0
+ 1038 0530 CB01      		movw r24,r22
+ 1039 0532 0E94 0000 		call drivewheel_1
+ 1040               	.LVL43:
+ 388:main.c        ****                     drivewheel_2(0,-255,255);
+ 1041               		.loc 1 388 0
+ 1042 0536 21E0      		ldi r18,lo8(1)
+ 1043 0538 3FEF      		ldi r19,lo8(-1)
+ 1044 053a 4FEF      		ldi r20,lo8(-1)
+ 1045 053c 5FEF      		ldi r21,lo8(-1)
+ 1046 053e 60E0      		ldi r22,0
+ 1047 0540 70E0      		ldi r23,0
+ 1048 0542 CB01      		movw r24,r22
+ 1049 0544 0E94 0000 		call drivewheel_2
+ 1050               	.LVL44:
+ 1051               	.LBB18:
+ 1052               	.LBB19:
+ 1053               		.loc 2 163 0
+ 1054 0548 8FEF      		ldi r24,lo8(294911)
+ 1055 054a 9FE7      		ldi r25,hi8(294911)
+ 1056 054c 24E0      		ldi r18,hlo8(294911)
+ 1057 054e 8150      		1: subi r24,1
+ 1058 0550 9040      		sbci r25,0
+ 1059 0552 2040      		sbci r18,0
+ 1060 0554 01F4      		brne 1b
+ 1061 0556 00C0      		rjmp .
+ 1062 0558 0000      		nop
+ 1063               	.LBE19:
+ 1064               	.LBE18:
+ 389:main.c        ****                     _delay_ms(100);
+ 390:main.c        ****                     check = 1;
+ 1065               		.loc 1 390 0
+ 1066 055a 81E0      		ldi r24,lo8(1)
+ 1067 055c 8093 0000 		sts check,r24
+ 1068               	.LVL45:
+ 1069               	.L54:
+ 391:main.c        ****                 }
+ 392:main.c        ****                 drivewheel_1(120,-255,255);
+ 1070               		.loc 1 392 0
+ 1071 0560 E12C      		mov r14,__zero_reg__
+ 1072 0562 F12C      		mov r15,__zero_reg__
+ 1073 0564 8701      		movw r16,r14
+ 1074 0566 EA94      		dec r14
+ 1075 0568 21E0      		ldi r18,lo8(1)
+ 1076 056a 3FEF      		ldi r19,lo8(-1)
+ 1077 056c 4FEF      		ldi r20,lo8(-1)
+ 1078 056e 5FEF      		ldi r21,lo8(-1)
+ 1079 0570 68E7      		ldi r22,lo8(120)
+ 1080 0572 70E0      		ldi r23,0
+ 1081 0574 80E0      		ldi r24,0
+ 1082 0576 90E0      		ldi r25,0
+ 1083 0578 0E94 0000 		call drivewheel_1
+ 1084               	.LVL46:
+ 393:main.c        ****                 drivewheel_2(-120,-255,255);
+ 1085               		.loc 1 393 0
+ 1086 057c 21E0      		ldi r18,lo8(1)
+ 1087 057e 3FEF      		ldi r19,lo8(-1)
+ 1088 0580 4FEF      		ldi r20,lo8(-1)
+ 1089 0582 5FEF      		ldi r21,lo8(-1)
+ 1090 0584 68E8      		ldi r22,lo8(-120)
+ 1091 0586 7FEF      		ldi r23,lo8(-1)
+ 1092 0588 8FEF      		ldi r24,lo8(-1)
+ 1093 058a 9FEF      		ldi r25,lo8(-1)
+ 1094 058c 0E94 0000 		call drivewheel_2
+ 1095               	.LVL47:
+ 394:main.c        ****             if(countercw2 >=1000 || countercw1 <=0)
+ 1096               		.loc 1 394 0
+ 1097 0590 8091 0000 		lds r24,countercw2
+ 1098 0594 9091 0000 		lds r25,countercw2+1
+ 1099 0598 883E      		cpi r24,-24
+ 1100 059a 9340      		sbci r25,3
+ 1101 059c 04F4      		brge .L55
+ 1102               		.loc 1 394 0 is_stmt 0 discriminator 1
+ 1103 059e 8091 0000 		lds r24,countercw1
+ 1104 05a2 9091 0000 		lds r25,countercw1+1
+ 1105 05a6 1816      		cp __zero_reg__,r24
+ 1106 05a8 1906      		cpc __zero_reg__,r25
+ 1107 05aa 04F0      		brlt .L48
+ 1108               	.L55:
+ 395:main.c        ****             {
+ 396:main.c        ****                 counter = 1;
+ 1109               		.loc 1 396 0 is_stmt 1
+ 1110 05ac 81E0      		ldi r24,lo8(1)
+ 1111 05ae 8093 0000 		sts counter,r24
+ 1112 05b2 00C0      		rjmp .L48
+ 1113               	.L49:
+ 397:main.c        ****             }
+ 398:main.c        ****         }
+ 399:main.c        ****     }
+ 400:main.c        ****     else
+ 401:main.c        ****     {
+ 402:main.c        ****         drivewheel_1(0,-255,255);
+ 1114               		.loc 1 402 0
+ 1115 05b4 E12C      		mov r14,__zero_reg__
+ 1116 05b6 F12C      		mov r15,__zero_reg__
+ 1117 05b8 8701      		movw r16,r14
+ 1118 05ba EA94      		dec r14
+ 1119 05bc 21E0      		ldi r18,lo8(1)
+ 1120 05be 3FEF      		ldi r19,lo8(-1)
+ 1121 05c0 4FEF      		ldi r20,lo8(-1)
+ 1122 05c2 5FEF      		ldi r21,lo8(-1)
+ 1123 05c4 60E0      		ldi r22,0
+ 1124 05c6 70E0      		ldi r23,0
+ 1125 05c8 CB01      		movw r24,r22
+ 1126 05ca 0E94 0000 		call drivewheel_1
+ 1127               	.LVL48:
+ 403:main.c        ****         drivewheel_2(0,-255,255);
+ 1128               		.loc 1 403 0
+ 1129 05ce 21E0      		ldi r18,lo8(1)
+ 1130 05d0 3FEF      		ldi r19,lo8(-1)
+ 1131 05d2 4FEF      		ldi r20,lo8(-1)
+ 1132 05d4 5FEF      		ldi r21,lo8(-1)
+ 1133 05d6 60E0      		ldi r22,0
+ 1134 05d8 70E0      		ldi r23,0
+ 1135 05da CB01      		movw r24,r22
+ 1136 05dc 0E94 0000 		call drivewheel_2
+ 1137               	.LVL49:
+ 1138               	.L48:
+ 1139               	/* epilogue start */
+ 404:main.c        ****     }
+ 405:main.c        **** }
+ 1140               		.loc 1 405 0
+ 1141 05e0 1F91      		pop r17
+ 1142 05e2 0F91      		pop r16
+ 1143 05e4 FF90      		pop r15
+ 1144 05e6 EF90      		pop r14
+ 1145 05e8 0895      		ret
+ 1146               		.cfi_endproc
+ 1147               	.LFE21:
+ 1149               		.section	.text.startup,"ax",@progbits
+ 1150               	.global	main
+ 1152               	main:
+ 1153               	.LFB22:
+ 406:main.c        **** 
+ 407:main.c        **** int main(void)
+ 408:main.c        **** {
+ 1154               		.loc 1 408 0
+ 1155               		.cfi_startproc
+ 1156               	/* prologue: function */
+ 1157               	/* frame size = 0 */
+ 1158               	/* stack size = 0 */
+ 1159               	.L__stack_usage = 0
+ 409:main.c        ****     port_init();
+ 1160               		.loc 1 409 0
+ 1161 0000 0E94 0000 		call port_init
+ 1162               	.LVL50:
+ 410:main.c        **** //    exti_init();
+ 411:main.c        ****     timer_init_motor();
+ 1163               		.loc 1 411 0
+ 1164 0004 0E94 0000 		call timer_init_motor
+ 1165               	.LVL51:
+ 412:main.c        ****     usart_init();
+ 1166               		.loc 1 412 0
+ 1167 0008 0E94 0000 		call usart_init
+ 1168               	.LVL52:
+ 413:main.c        ****     
+ 414:main.c        ****     sei();
+ 1169               		.loc 1 414 0
+ 1170               	/* #APP */
+ 1171               	 ;  414 "main.c" 1
+ 1172 000c 7894      		sei
+ 1173               	 ;  0 "" 2
+ 1174               	/* #NOAPP */
+ 1175               	.L61:
+ 415:main.c        ****     while(1)
+ 416:main.c        ****     {
+ 417:main.c        ****         PORTF = RX_raw;
+ 1176               		.loc 1 417 0
+ 1177 000e 8091 0000 		lds r24,RX_raw
+ 1178 0012 81BB      		out 0x11,r24
+ 418:main.c        ****         ps2_values();
+ 1179               		.loc 1 418 0
+ 1180 0014 0E94 0000 		call ps2_values
+ 1181               	.LVL53:
+ 419:main.c        ****         if(i == 1)
+ 1182               		.loc 1 419 0
+ 1183 0018 8091 0000 		lds r24,i
+ 1184 001c 8823      		tst r24
+ 1185 001e 01F0      		breq .L62
+ 420:main.c        ****         {
+ 421:main.c        ****             drivewheel_1(speed1,-255,255);
+ 1186               		.loc 1 421 0
+ 1187 0020 6091 0000 		lds r22,speed1
+ 1188 0024 7091 0000 		lds r23,speed1+1
+ 1189 0028 8827      		clr r24
+ 1190 002a 77FD      		sbrc r23,7
+ 1191 002c 8095      		com r24
+ 1192 002e 982F      		mov r25,r24
+ 1193 0030 E12C      		mov r14,__zero_reg__
+ 1194 0032 F12C      		mov r15,__zero_reg__
+ 1195 0034 8701      		movw r16,r14
+ 1196 0036 EA94      		dec r14
+ 1197 0038 21E0      		ldi r18,lo8(1)
+ 1198 003a 3FEF      		ldi r19,lo8(-1)
+ 1199 003c 4FEF      		ldi r20,lo8(-1)
+ 1200 003e 5FEF      		ldi r21,lo8(-1)
+ 1201 0040 0E94 0000 		call drivewheel_1
+ 1202               	.LVL54:
+ 422:main.c        ****             drivewheel_2(speed2,-255,255);
+ 1203               		.loc 1 422 0
+ 1204 0044 6091 0000 		lds r22,speed2
+ 1205 0048 7091 0000 		lds r23,speed2+1
+ 1206 004c 8827      		clr r24
+ 1207 004e 77FD      		sbrc r23,7
+ 1208 0050 8095      		com r24
+ 1209 0052 982F      		mov r25,r24
+ 1210 0054 21E0      		ldi r18,lo8(1)
+ 1211 0056 3FEF      		ldi r19,lo8(-1)
+ 1212 0058 4FEF      		ldi r20,lo8(-1)
+ 1213 005a 5FEF      		ldi r21,lo8(-1)
+ 1214 005c 00C0      		rjmp .L64
+ 1215               	.L62:
+ 423:main.c        ****         }
+ 424:main.c        ****         else
+ 425:main.c        ****         {
+ 426:main.c        ****             drivewheel_1(0,-255,255);
+ 1216               		.loc 1 426 0
+ 1217 005e E12C      		mov r14,__zero_reg__
+ 1218 0060 F12C      		mov r15,__zero_reg__
+ 1219 0062 8701      		movw r16,r14
+ 1220 0064 EA94      		dec r14
+ 1221 0066 21E0      		ldi r18,lo8(1)
+ 1222 0068 3FEF      		ldi r19,lo8(-1)
+ 1223 006a 4FEF      		ldi r20,lo8(-1)
+ 1224 006c 5FEF      		ldi r21,lo8(-1)
+ 1225 006e 60E0      		ldi r22,0
+ 1226 0070 70E0      		ldi r23,0
+ 1227 0072 CB01      		movw r24,r22
+ 1228 0074 0E94 0000 		call drivewheel_1
+ 1229               	.LVL55:
+ 427:main.c        ****             drivewheel_2(0,-255,255);
+ 1230               		.loc 1 427 0
+ 1231 0078 21E0      		ldi r18,lo8(1)
+ 1232 007a 3FEF      		ldi r19,lo8(-1)
+ 1233 007c 4FEF      		ldi r20,lo8(-1)
+ 1234 007e 5FEF      		ldi r21,lo8(-1)
+ 1235 0080 60E0      		ldi r22,0
+ 1236 0082 70E0      		ldi r23,0
+ 1237 0084 CB01      		movw r24,r22
+ 1238               	.L64:
+ 1239 0086 0E94 0000 		call drivewheel_2
+ 1240               	.LVL56:
+ 1241 008a 00C0      		rjmp .L61
+ 1242               		.cfi_endproc
+ 1243               	.LFE22:
+ 1245               	.global	speed2
+ 1246               		.data
+ 1249               	speed2:
+ 1250 0000 9600      		.word	150
+ 1251               	.global	speed1
+ 1254               	speed1:
+ 1255 0002 9600      		.word	150
+ 1256               	.global	start
+ 1257               		.section .bss
+ 1260               	start:
+ 1261 0000 00        		.zero	1
+ 1262               	.global	counter
+ 1263               		.data
+ 1266               	counter:
+ 1267 0004 01        		.byte	1
+ 1268               	.global	check
+ 1271               	check:
+ 1272 0005 01        		.byte	1
+ 1273               	.global	i
+ 1274               		.section .bss
+ 1277               	i:
+ 1278 0001 00        		.zero	1
+ 1279               	.global	countercw1
+ 1282               	countercw1:
+ 1283 0002 0000      		.zero	2
+ 1284               	.global	countercw2
+ 1285               		.data
+ 1288               	countercw2:
+ 1289 0006 E803      		.word	1000
+ 1290               	.global	currstateb2
+ 1291               		.section .bss
+ 1294               	currstateb2:
+ 1295 0004 00        		.zero	1
+ 1296               	.global	currstatea2
+ 1299               	currstatea2:
+ 1300 0005 00        		.zero	1
+ 1301               	.global	currstateb1
+ 1304               	currstateb1:
+ 1305 0006 00        		.zero	1
+ 1306               	.global	currstatea1
+ 1309               	currstatea1:
+ 1310 0007 00        		.zero	1
+ 1311               	.global	y_vect
+ 1314               	y_vect:
+ 1315 0008 0000      		.zero	2
+ 1316               	.global	x_vect
+ 1319               	x_vect:
+ 1320 000a 0000      		.zero	2
+ 1321               	.global	yj2
+ 1324               	yj2:
+ 1325 000c 0000      		.zero	2
+ 1326               	.global	xj2
+ 1329               	xj2:
+ 1330 000e 0000      		.zero	2
+ 1331               	.global	yj1
+ 1334               	yj1:
+ 1335 0010 0000      		.zero	2
+ 1336               	.global	xj1
+ 1339               	xj1:
+ 1340 0012 0000      		.zero	2
+ 1341               	.global	RX_range
+ 1342               		.data
+ 1345               	RX_range:
+ 1346 0008 C8        		.byte	-56
+ 1347               	.global	pwm_range
+ 1350               	pwm_range:
+ 1351 0009 FF        		.byte	-1
+ 1352               		.comm	RX,4,1
+ 1353               	.global	RX_ad1
+ 1354               		.section .bss
+ 1357               	RX_ad1:
+ 1358 0014 00        		.zero	1
+ 1359               	.global	RX_raw
+ 1362               	RX_raw:
+ 1363 0015 00        		.zero	1
+ 1364               		.comm	butt,16,1
+ 1365               		.text
+ 1366               	.Letext0:
+ 1367               		.file 3 "/usr/local/CrossPack-AVR-20131216/avr/include/stdint.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:2      *ABS*:0000003e __SP_H__
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:3      *ABS*:0000003d __SP_L__
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:4      *ABS*:0000003f __SREG__
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:5      *ABS*:0000003b __RAMPZ__
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:6      *ABS*:00000000 __tmp_reg__
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:7      *ABS*:00000001 __zero_reg__
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:13     .text:00000000 port_init
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:49     .text:00000026 timer_init_motor
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:75     .text:0000003c limit_var
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:134    .text:0000006c drivewheel_1
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:261    .text:00000112 drivewheel_2
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:388    .text:000001b8 receive
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1362   .bss:00000015 RX_raw
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1357   .bss:00000014 RX_ad1
+                            *COM*:00000010 butt
+                            *COM*:00000004 RX
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:447    .text:000001f2 __vector_54
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:548    .text:0000024a usart_init
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:573    .text:00000262 map_value
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:709    .text:000002f0 ps2_values
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1277   .bss:00000001 i
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1254   .data:00000002 speed1
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1249   .data:00000000 speed2
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1260   .bss:00000000 start
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:899    .text:0000045e walking
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1266   .data:00000004 counter
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1271   .data:00000005 check
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1288   .data:00000006 countercw2
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1282   .bss:00000002 countercw1
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1152   .text.startup:00000000 main
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1294   .bss:00000004 currstateb2
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1299   .bss:00000005 currstatea2
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1304   .bss:00000006 currstateb1
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1309   .bss:00000007 currstatea1
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1314   .bss:00000008 y_vect
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1319   .bss:0000000a x_vect
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1324   .bss:0000000c yj2
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1329   .bss:0000000e xj2
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1334   .bss:00000010 yj1
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1339   .bss:00000012 xj1
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1345   .data:00000008 RX_range
+/var/folders/h4/v2sx1nv55fbfb9hmgflpp9yc0000gn/T//ccyXs6Ts.s:1350   .data:00000009 pwm_range
+
+UNDEFINED SYMBOLS
+__mulsi3
+__divmodsi4
+__do_copy_data
+__do_clear_bss
