@@ -1,0 +1,78 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXFileReference section */
+		5B70C9D621DE7F2600AC2526 /* avr_compiler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = avr_compiler.h; path = "Files for compiling/avr_compiler.h"; sourceTree = "<group>"; };
+		5B70C9D721DE7F3000AC2526 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; name = Makefile; path = "Files for compiling/Makefile"; sourceTree = "<group>"; };
+		5B70C9D821DE7F4100AC2526 /* vl530lx.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vl530lx.h; sourceTree = "<group>"; };
+		5B70C9D921DE7F4100AC2526 /* vl530lx.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = vl530lx.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		5B70C9CE21DE7F0600AC2526 = {
+			isa = PBXGroup;
+			children = (
+				5B70C9D821DE7F4100AC2526 /* vl530lx.h */,
+				5B70C9D921DE7F4100AC2526 /* vl530lx.c */,
+				5B70C9D721DE7F3000AC2526 /* Makefile */,
+				5B70C9D621DE7F2600AC2526 /* avr_compiler.h */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		5B70C9CF21DE7F0600AC2526 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1010;
+			};
+			buildConfigurationList = 5B70C9D221DE7F0600AC2526 /* Build configuration list for PBXProject "vl530lx avr" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 5B70C9CE21DE7F0600AC2526;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		5B70C9D321DE7F0600AC2526 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		5B70C9D421DE7F0600AC2526 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5B70C9D221DE7F0600AC2526 /* Build configuration list for PBXProject "vl530lx avr" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B70C9D321DE7F0600AC2526 /* Debug */,
+				5B70C9D421DE7F0600AC2526 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5B70C9CF21DE7F0600AC2526 /* Project object */;
+}
